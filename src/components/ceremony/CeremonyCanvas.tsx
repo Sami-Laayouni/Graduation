@@ -1,0 +1,263 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import type { LeafDNA, ProjectorVisualState, Season } from "@/lib/types";
+import { nextSeason } from "@/lib/seasons";
+import {
+  asiVeinCount,
+  leafZoomT,
+  shouldShowAsiLeaf,
+  visualLayer,
+} from "@/lib/visual-progress";
+import { MoonlitCanvasScene, type CanvasSceneMode } from "./MoonlitCanvasScene";
+import { SeasonCycleBanner } from "./SeasonCycleBanner";
+import { LifeStageBanner, LIFE_STAGES } from "./LifeStageBanner";
+import { ClassmatesBoard } from "./ClassmatesBoard";
+import { LeafPopEffect } from "./LeafPopEffect";
+import { EndCardOverlay } from "./EndCardOverlay";
+import { CeremonyQR } from "../CeremonyQR";
+
+interface Props {
+  state:          ProjectorVisualState;
+  season:         Season;
+  sessionId:      string;
+  sectionId:      string;
+  leafCount?:     number;
+  leafPulseAt?:   number;
+  cueText?:       string;
+  /** Projector is present but may be washed-out — pump contrast and slow transitions */
+  stage?:         boolean;
+  reducedMotion?: boolean;
+}
+
+function ease() { return [0.22, 1, 0.36, 1] as const; }
+function stageDuration(stage: boolean, base: number) { return stage ? base * 2.2 : base; }
+
+const FALLING_LEAF_STATES: ProjectorVisualState[] = [
+  "seasons_cycle", "forest_zoom", "life_stages", "end_card",
+];
+
+export function CeremonyCanvas({
+  state,
+  season,
+  sessionId,
+  sectionId,
+  leafCount    = 0,
+  leafPulseAt  = 0,
+  cueText,
+  stage        = true,
+  reducedMotion: reducedProp,
+}: Props) {
+  const prefersReduced = useReducedMotion();
+  const reduced        = reducedProp ?? prefersReduced ?? false;
+
+  const [cycleSeason,    setCycleSeason]    = useState<Season>(season);
+  const [stageIdx,       setStageIdx]       = useState(0);
+  const [audienceLeaves, setAudienceLeaves] = useState<LeafDNA[]>([]);
+  const [seasonMorphPulse, setSeasonMorphPulse] = useState(0);
+  const newestLeafRef  = useRef<string | undefined>(undefined);
+  const prevPulseRef   = useRef(leafPulseAt ?? 0);
+  const prevCycleRef   = useRef<Season>(season);
+  const morphInitRef   = useRef(false);
+  const morphRafRef    = useRef(0);
+
+  // Fetch (and re-fetch) persisted leaves from the server
+  const fetchLeaves = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/session/${sessionId}/leaves`);
+      if (!res.ok) return;
+      const data = await res.json() as { leaves: LeafDNA[] };
+      setAudienceLeaves(data.leaves);
+      if (data.leaves.length > 0)
+        newestLeafRef.current = data.leaves[data.leaves.length - 1].id;
+    } catch { /* ignore */ }
+  }, [sessionId]);
+
+  // Initial load + re-fetch whenever a new leaf is added
+  useEffect(() => { fetchLeaves(); }, [fetchLeaves]);
+  useEffect(() => {
+    if ((leafPulseAt ?? 0) !== prevPulseRef.current) {
+      prevPulseRef.current = leafPulseAt ?? 0;
+      fetchLeaves();
+    }
+  }, [leafPulseAt, fetchLeaves]);
+
+  const layer              = visualLayer(state, sectionId);
+  const isSeasonsSection   = state === "seasons_cycle" && sectionId === "look_up_2";
+  const isLifeStages       = state === "life_stages";
+  const isClassmatesRoll   = state === "classmates_roll";
+  const leafPlacing          = state === "leaf_placing";
+  const showQr         = state === "qr_intro" || state === "qr_reflection";
+  const showAsiLeaf    = shouldShowAsiLeaf(sectionId, state);
+  const veinCount      = asiVeinCount(sectionId);
+  const zoomT          = leafZoomT(sectionId);
+
+  useEffect(() => { setCycleSeason(season); }, [season]);
+
+  // Season cycle — section 30 only
+  useEffect(() => {
+    if (!isSeasonsSection || reduced) return;
+    const id = setInterval(() => setCycleSeason((s) => nextSeason(s)), 4000);
+    return () => clearInterval(id);
+  }, [isSeasonsSection, reduced]);
+
+  // Dramatic leaf morph pulse when season changes (section 30)
+  useEffect(() => {
+    if (!isSeasonsSection) {
+      morphInitRef.current = false;
+      setSeasonMorphPulse(0);
+      return;
+    }
+    if (!morphInitRef.current) {
+      morphInitRef.current = true;
+      prevCycleRef.current = cycleSeason;
+      return;
+    }
+    if (prevCycleRef.current === cycleSeason) return;
+    prevCycleRef.current = cycleSeason;
+
+    cancelAnimationFrame(morphRafRef.current);
+    const start = performance.now();
+    const duration = 2000;
+
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      setSeasonMorphPulse(t);
+      if (t < 1) {
+        morphRafRef.current = requestAnimationFrame(tick);
+      }
+    };
+    morphRafRef.current = requestAnimationFrame(tick);
+
+    return () => cancelAnimationFrame(morphRafRef.current);
+  }, [cycleSeason, isSeasonsSection]);
+
+  // Life-stage cycle — reset to stage 0 when entering, advance every 5s
+  useEffect(() => {
+    if (!isLifeStages) { setStageIdx(0); return; }
+    setStageIdx(0);
+    const id = setInterval(() => {
+      setStageIdx((i) => {
+        const next = i + 1;
+        if (next >= LIFE_STAGES.length) { clearInterval(id); return i; }
+        return next;
+      });
+    }, 5200);
+    return () => clearInterval(id);
+  }, [isLifeStages]);
+
+  // Keep canvas season in sync with the active life stage
+  useEffect(() => {
+    if (isLifeStages) setCycleSeason(LIFE_STAGES[stageIdx].season);
+  }, [isLifeStages, stageIdx]);
+
+  const displaySeason = (isSeasonsSection || isLifeStages) ? cycleSeason : season;
+
+  const canvasMode: CanvasSceneMode = useMemo(() => {
+    if (showQr)       return "cosmos";
+    if (leafPlacing)  return "tree";
+    if (showAsiLeaf)  return "leaf";
+    if (layer === "tree") return "tree";
+    return "cosmos";
+  }, [showQr, leafPlacing, showAsiLeaf, layer]);
+
+  const treeScale = useMemo(() => {
+    if (state === "forest_zoom")  return 0.6;
+    if (state === "life_stages")  return 0.72;
+    if (state === "end_card")     return 0.88;
+    return 1;
+  }, [state]);
+
+  // Falling leaves only when people have actually responded AND in the right phase
+  const enableFallingLeaves = useMemo(() =>
+    leafCount > 0 && FALLING_LEAF_STATES.includes(state),
+    [leafCount, state]
+  );
+
+  const isEndCard = state === "end_card";
+
+  return (
+    <div className="relative w-full h-full overflow-hidden bg-[#010205]">
+      <MoonlitCanvasScene
+        mode               = {canvasMode}
+        season             = {displaySeason}
+        sectionId          = {sectionId}
+        veinCount          = {veinCount}
+        zoomT              = {zoomT}
+        audienceLeaves     = {audienceLeaves}
+        newestLeafId       = {newestLeafRef.current}
+        treeScale          = {treeScale}
+        enableFallingLeaves= {enableFallingLeaves}
+        isFinale           = {isEndCard}
+        leafLabel          = {sectionId === "memories_2" ? cueText : undefined}
+        leafPlacing        = {leafPlacing}
+        seasonMorphPulse   = {isSeasonsSection ? seasonMorphPulse : 0}
+        stage              = {stage}
+        reduced            = {reduced}
+      />
+
+      <LeafPopEffect trigger={layer === "tree" ? leafPulseAt : 0} stage={stage} />
+
+      <AnimatePresence>
+        {isClassmatesRoll && <ClassmatesBoard stage={stage} />}
+      </AnimatePresence>
+
+      {isSeasonsSection && <SeasonCycleBanner season={displaySeason} stage={stage} />}
+
+      {isLifeStages && (
+        <LifeStageBanner
+          stage={LIFE_STAGES[stageIdx]}
+          index={stageIdx}
+        />
+      )}
+
+      <EndCardOverlay
+        visible={isEndCard}
+        cueText={cueText}
+        stage={stage}
+      />
+
+      <AnimatePresence mode="wait">
+        {showQr && (
+          <motion.div
+            key="qr"
+            className="absolute inset-0 z-20 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: stageDuration(stage, 1) }}
+          >
+            <CeremonyQR
+              sessionId={sessionId}
+              large   ={state !== "qr_intro"}
+              variant ={state === "qr_intro" ? "intro" : "reflection"}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence mode="wait">
+        {cueText && !showQr && !isLifeStages && !isClassmatesRoll && state !== "end_card" && layer === "tree" && (
+          <motion.div
+            key={cueText}
+            className="absolute bottom-[8%] left-0 right-0 px-8 z-10 pointer-events-none"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: stageDuration(stage, 1.4), ease: ease() }}
+          >
+            {/* Stage: larger cue text, full white — readable across a room */}
+            <p className={`font-serif text-center tracking-wide mx-auto max-w-4xl drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] ${
+              stage
+                ? "text-3xl md:text-5xl lg:text-6xl text-white font-medium"
+                : "text-2xl md:text-3xl text-white/95"
+            }`}>
+              {cueText}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

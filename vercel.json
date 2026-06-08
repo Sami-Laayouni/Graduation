@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "src/app/api/session/[id]/stream/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/session/[id]/event/route.ts": {
+      "maxDuration": 10
+    },
+    "src/app/api/session/[id]/response/route.ts": {
+      "maxDuration": 10
+    }
+  }
+}

@@ -1,0 +1,213 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design tokens ──────────────────────────────────────────────────────── */
+:root {
+  --bg:         #030508;
+  --surface:    rgba(255, 255, 255, 0.07);
+  --surface-hi: rgba(255, 255, 255, 0.11);
+  --border:     rgba(255, 255, 255, 0.14);
+  --border-hi:  rgba(255, 255, 255, 0.28);
+  --text:       #f4f6fb;
+  --text-dim:   rgba(244, 246, 251, 0.82);
+  --text-muted: rgba(244, 246, 251, 0.55);
+  --accent:     #e4ecfa;
+  --glow:       rgba(220, 232, 250, 0.55);
+  --glow-soft:  rgba(220, 232, 250, 0.22);
+  --silver:     #b8c8e4;
+}
+
+/* ── Base ───────────────────────────────────────────────────────────────── */
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color:      var(--text);
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration:      0.01ms !important;
+    animation-iteration-count: 1  !important;
+    transition-duration:     0.01ms !important;
+  }
+}
+
+/* ── Audience page background ───────────────────────────────────────────── */
+.fairy-page {
+  background:
+    radial-gradient(ellipse 80% 55% at 50% -5%,  rgba(200, 216, 240, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 10% 90%,  rgba(160, 190, 220, 0.03) 0%, transparent 50%),
+    linear-gradient(180deg, #04060d 0%, #070b14 50%, #04060d 100%);
+}
+
+/* ── Caption card ───────────────────────────────────────────────────────── */
+.caption-card,
+.fairy-caption-card {
+  border-radius: 1.25rem;
+  border: 1px solid var(--border-hi);
+  backdrop-filter: blur(16px);
+  background: linear-gradient(
+    155deg,
+    rgba(8, 12, 20, 0.85) 0%,
+    rgba(4, 8, 14, 0.78) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.07) inset,
+    0 20px 48px -16px rgba(0, 0, 0, 0.65),
+    0 0 60px -24px rgba(200, 216, 240, 0.10);
+}
+
+/* ── Reflection card ────────────────────────────────────────────────────── */
+.fairy-reflection-card {
+  border-radius: 1.25rem;
+  border: 1px solid var(--border-hi);
+  backdrop-filter: blur(20px);
+  background: linear-gradient(
+    160deg,
+    rgba(8, 12, 20, 0.90) 0%,
+    rgba(4, 8, 14, 0.84) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 20px 48px -16px rgba(0, 0, 0, 0.65),
+    0 0 80px -24px rgba(200, 216, 240, 0.12);
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+.btn-ceremony {
+  border-radius: 0.875rem;
+  border: 1px solid var(--border-hi);
+  padding: 0.75rem 1.5rem;
+  color: var(--accent);
+  background: var(--surface);
+  transition: all 0.4s ease;
+  font-size: 0.875rem;
+  letter-spacing: 0.04em;
+}
+.btn-ceremony:hover:not(:disabled) {
+  background: var(--surface-hi);
+  border-color: rgba(200, 216, 240, 0.3);
+  box-shadow: 0 0 24px -8px var(--glow-soft);
+}
+.btn-ceremony:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.btn-ceremony-primary {
+  border-radius: 0.875rem;
+  border: 1px solid rgba(200, 216, 240, 0.35);
+  padding: 0.875rem 1.75rem;
+  color: #e8ecf4;
+  background: linear-gradient(
+    180deg,
+    rgba(200, 216, 240, 0.18) 0%,
+    rgba(200, 216, 240, 0.07) 100%
+  );
+  box-shadow: 0 0 32px -10px var(--glow);
+  transition: all 0.4s ease;
+  letter-spacing: 0.04em;
+}
+.btn-ceremony-primary:hover:not(:disabled) {
+  box-shadow: 0 0 48px -8px var(--glow);
+  border-color: rgba(200, 216, 240, 0.55);
+}
+.btn-ceremony-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Audience submit button */
+.fairy-btn {
+  border-radius: 1rem;
+  padding: 0.9rem 1.5rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  transition: all 0.4s ease;
+  color: #e8ecf4;
+  background: linear-gradient(
+    180deg,
+    rgba(200, 216, 240, 0.2) 0%,
+    rgba(160, 185, 220, 0.1) 100%
+  );
+  border: 1px solid rgba(200, 216, 240, 0.3);
+  box-shadow: 0 0 28px -8px rgba(200, 216, 240, 0.2);
+  display: block;
+  text-align: center;
+}
+.fairy-btn:hover:not(:disabled) {
+  box-shadow: 0 0 40px -6px rgba(200, 216, 240, 0.35);
+  border-color: rgba(200, 216, 240, 0.5);
+  transform: translateY(-1px);
+}
+
+/* ── Text input / textarea ──────────────────────────────────────────────── */
+.ceremony-input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  color: var(--text);
+  padding: 0.75rem 1rem;
+  width: 100%;
+  resize: none;
+  transition: border-color 0.3s;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+.ceremony-input:focus {
+  outline: none;
+  border-color: rgba(200, 216, 240, 0.4);
+  box-shadow: 0 0 0 3px rgba(200, 216, 240, 0.06);
+}
+.ceremony-input::placeholder { color: var(--text-muted); }
+
+/* ── Accessibility overrides ────────────────────────────────────────────── */
+.high-contrast {
+  --border: rgba(255, 255, 255, 0.35);
+  --text:   #ffffff;
+  --accent: #ffffff;
+}
+.high-contrast .caption-card,
+.high-contrast .fairy-caption-card {
+  background: rgba(0, 0, 0, 0.85);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.large-text .caption-text  { font-size: 1.35rem; line-height: 1.7; }
+.large-text .prompt-text   { font-size: 1.1rem; }
+
+/* ── RTL support ────────────────────────────────────────────────────────── */
+[dir="rtl"] .rtl-flip {
+  direction:  rtl;
+  text-align: right;
+}
+
+/* ── Sparkle + leaf burst ───────────────────────────────────────────────── */
+.fairy-sparkle {
+  background: radial-gradient(circle, rgba(220, 230, 250, 0.5) 0%, transparent 70%);
+  animation: fairy-float 7s ease-in-out infinite;
+}
+
+@keyframes fairy-float {
+  0%, 100% { opacity: 0.15; transform: translateY(0)    scale(1);   }
+  50%       { opacity: 0.6;  transform: translateY(-10px) scale(1.25); }
+}
+
+.leaf-burst {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+
+/* ── Speaker dashboard ──────────────────────────────────────────────────── */
+.ceremony-surface {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar             { width: 4px; }
+::-webkit-scrollbar-track       { background: transparent; }
+::-webkit-scrollbar-thumb       { background: var(--border-hi); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.22); }
