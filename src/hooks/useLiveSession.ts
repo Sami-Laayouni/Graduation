@@ -8,41 +8,72 @@ function parseState(sessionId: string, data: LiveSessionState): LiveSessionState
   return normalizeLiveState({ ...data, sessionId });
 }
 
+/** How often clients poll /state while SSE is healthy (ms) */
+const FAST_POLL_MS = 300;
+/** Fallback poll when SSE is disconnected (ms) */
+const FALLBACK_POLL_MS = 400;
+/** SSE reconnect delay (ms) */
+const RECONNECT_MS = 600;
+
 export function useLiveSession(sessionId: string) {
   const [liveState, setLiveState] = useState<LiveSessionState | null>(null);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const esRef   = useRef<EventSource | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const esRef       = useRef<EventSource | null>(null);
+  const pollRef     = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fastPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const tsRef       = useRef(0);
+
+  const applyState = useCallback((data: LiveSessionState) => {
+    const parsed = parseState(sessionId, data);
+    if (parsed.timestamp === tsRef.current) return;
+    tsRef.current = parsed.timestamp;
+    setLiveState(parsed);
+    setError(null);
+  }, [sessionId]);
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch(`/api/session/${sessionId}/state`, { cache: "no-store" });
+      const since = tsRef.current;
+      const url   = since
+        ? `/api/session/${sessionId}/state?since=${since}`
+        : `/api/session/${sessionId}/state`;
+      const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch state");
-      const data = (await res.json()) as LiveSessionState;
-      setLiveState(parseState(sessionId, data));
-      setError(null);
+      const data = (await res.json()) as LiveSessionState & { unchanged?: boolean };
+      if (data.unchanged) return;
+      applyState(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sync error");
     }
-  }, [sessionId]);
+  }, [sessionId, applyState]);
 
   useEffect(() => {
     refresh();
 
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
-    /** Start polling Redis via /state — only used when SSE is down */
     function startFallbackPoll() {
       if (pollRef.current) return;
-      pollRef.current = setInterval(refresh, 1_000);
+      pollRef.current = setInterval(refresh, FALLBACK_POLL_MS);
     }
 
-    /** Stop the fallback poll — SSE is healthy, no need to waste Redis reads */
     function stopFallbackPoll() {
       if (pollRef.current) {
         clearInterval(pollRef.current);
         pollRef.current = null;
+      }
+    }
+
+    function startFastPoll() {
+      if (fastPollRef.current) return;
+      fastPollRef.current = setInterval(refresh, FAST_POLL_MS);
+    }
+
+    function stopFastPoll() {
+      if (fastPollRef.current) {
+        clearInterval(fastPollRef.current);
+        fastPollRef.current = null;
       }
     }
 
@@ -54,13 +85,14 @@ export function useLiveSession(sessionId: string) {
       es.onopen = () => {
         setConnected(true);
         setError(null);
-        stopFallbackPoll(); // SSE is live — no polling needed
+        stopFallbackPoll();
+        startFastPoll();
       };
 
       es.onmessage = (ev) => {
         try {
           const data = JSON.parse(ev.data) as LiveSessionState;
-          setLiveState(parseState(sessionId, data));
+          applyState(data);
           setConnected(true);
         } catch {
           /* ignore malformed frame */
@@ -71,9 +103,10 @@ export function useLiveSession(sessionId: string) {
         setConnected(false);
         es.close();
         esRef.current = null;
-        refresh();                           // immediate sync
-        startFallbackPoll();                 // poll while SSE is reconnecting
-        reconnectTimer = setTimeout(connect, 1_200);
+        stopFastPoll();
+        refresh();
+        startFallbackPoll();
+        reconnectTimer = setTimeout(connect, RECONNECT_MS);
       };
     }
 
@@ -82,9 +115,10 @@ export function useLiveSession(sessionId: string) {
     return () => {
       if (reconnectTimer) clearTimeout(reconnectTimer);
       stopFallbackPoll();
+      stopFastPoll();
       esRef.current?.close();
     };
-  }, [sessionId, refresh]);
+  }, [sessionId, refresh, applyState]);
 
-  return { liveState, connected, error, refresh };
+  return { liveState, connected, error, refresh, applyState };
 }

@@ -138,7 +138,11 @@ export function AudienceExperience({ session }: Props) {
   }, [inReflection]);
 
   return (
-    <div className={clsx("min-h-dvh flex flex-col fairy-page relative", highContrast && "high-contrast", largeText && "large-text")}>
+    <div className={clsx(
+      "min-h-dvh flex flex-col fairy-page relative overflow-x-hidden",
+      highContrast && "high-contrast",
+      largeText && "large-text",
+    )}>
       {showBurst && <LeafBurst />}
 
       {/* Subtle ambient particles */}
@@ -160,24 +164,27 @@ export function AudienceExperience({ session }: Props) {
       </div>
 
       {/* Header */}
-      <header className="relative z-10 flex items-center justify-between px-4 py-3"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        <div className="flex items-center gap-2">
-          <div style={{ opacity: 0.6 }}>{LEAF_SVG}</div>
-          <span className="text-[11px] tracking-[0.18em] uppercase" style={{ color: "rgba(200,216,240,0.45)" }}>
+      <header
+        className="relative z-10 flex items-center justify-between gap-2 audience-safe-x audience-safe-top px-3 sm:px-4 py-2.5 sm:py-3 shrink-0"
+        style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="shrink-0" style={{ opacity: 0.6 }}>{LEAF_SVG}</div>
+          <span className="text-[10px] sm:text-[11px] tracking-[0.14em] sm:tracking-[0.18em] uppercase truncate max-w-[30vw] sm:max-w-none"
+            style={{ color: "rgba(200,216,240,0.45)" }}>
             Class of 2026
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {!isLanguageBoot && (
             <LanguageSelector value={language} onChange={setLanguage} compact />
           )}
-          <SyncIndicator connected={connected} error={error} />
+          <SyncIndicator connected={connected} error={error} compact />
         </div>
       </header>
 
-      {/* Main */}
-      <main className="relative z-10 flex-1 flex flex-col justify-center py-4 px-3 gap-4 overflow-y-auto">
+      {/* Main — scrollable on small screens when keyboard / long content */}
+      <main className="relative z-10 flex-1 flex flex-col justify-center min-h-0 py-3 sm:py-4 px-2 sm:px-3 gap-3 sm:gap-4 overflow-y-auto overscroll-y-contain audience-safe-x">
         <AnimatePresence mode="wait">
           {showReflection ? (
             <motion.div
@@ -203,7 +210,7 @@ export function AudienceExperience({ session }: Props) {
               /* ── Personal mode: the leaf IS the experience ── */
               <motion.div
                 key="personal-leaf"
-                className="flex flex-col items-center gap-6 py-6"
+                className="flex flex-col items-center gap-4 sm:gap-6 py-4 sm:py-6 w-full max-w-sm mx-auto"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
@@ -213,7 +220,7 @@ export function AudienceExperience({ session }: Props) {
                   animate={{ scale: 1, opacity: 1, rotate: 0 }}
                   transition={{ type: "spring", stiffness: 120, damping: 14, delay: 0.2 }}
                 >
-                  <LeafPreview dna={myLeafDNA} size={160} />
+                  <LeafPreview dna={myLeafDNA} size={128} />
                 </motion.div>
 
                 <motion.div
@@ -222,7 +229,7 @@ export function AudienceExperience({ session }: Props) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.7, duration: 0.8 }}
                 >
-                  <p className="font-serif text-2xl" style={{ color: "#e8ecf4" }}>
+                  <p className="font-serif text-xl sm:text-2xl" style={{ color: "#e8ecf4" }}>
                     Your leaf
                   </p>
                   <p className="text-sm" style={{ color: "rgba(200,216,240,0.45)" }}>
@@ -279,8 +286,8 @@ export function AudienceExperience({ session }: Props) {
                 fairy
               />
               <p
-                className="text-center text-[11px] tracking-wide leading-relaxed px-4"
-                style={{ color: "rgba(200,216,240,0.32)" }}
+                className="text-center text-xs sm:text-[11px] tracking-wide leading-relaxed px-2 sm:px-4 max-w-md mx-auto"
+                style={{ color: "rgba(200,216,240,0.38)" }}
                 dir={language === "ar" ? "rtl" : "ltr"}
               >
                 {t.lookUpReminder}
@@ -291,8 +298,10 @@ export function AudienceExperience({ session }: Props) {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 px-4 py-3 space-y-3"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+      <footer
+        className="relative z-10 audience-safe-x audience-safe-bottom px-3 sm:px-4 py-2.5 sm:py-3 space-y-2.5 sm:space-y-3 shrink-0"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+      >
         {/* Progress — show only a window of dots around the current section */}
         <div className="flex justify-center gap-[3px] overflow-hidden">
           {session.sections.map((_, i) => {
@@ -318,13 +327,13 @@ export function AudienceExperience({ session }: Props) {
         </div>
 
         {/* Accessibility toggles */}
-        <div className="flex justify-center gap-5 text-xs" style={{ color: "rgba(200,216,240,0.3)" }}>
-          <label className="flex items-center gap-1.5 cursor-pointer select-none">
-            <input type="checkbox" className="accent-gray-400" checked={highContrast} onChange={e => setHighContrast(e.target.checked)} />
+        <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs sm:text-sm" style={{ color: "rgba(200,216,240,0.38)" }}>
+          <label className="flex items-center gap-2 cursor-pointer select-none audience-touch px-1">
+            <input type="checkbox" className="accent-gray-400 w-4 h-4 shrink-0" checked={highContrast} onChange={e => setHighContrast(e.target.checked)} />
             {t.highContrast}
           </label>
-          <label className="flex items-center gap-1.5 cursor-pointer select-none">
-            <input type="checkbox" className="accent-gray-400" checked={largeText} onChange={e => setLargeText(e.target.checked)} />
+          <label className="flex items-center gap-2 cursor-pointer select-none audience-touch px-1">
+            <input type="checkbox" className="accent-gray-400 w-4 h-4 shrink-0" checked={largeText} onChange={e => setLargeText(e.target.checked)} />
             {t.largeText}
           </label>
         </div>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import clsx from "clsx";
-import type { SessionContent, SyncEventType } from "@/lib/types";
+import type { LiveSessionState, SessionContent, SyncEventType } from "@/lib/types";
 import { SyncIndicator } from "./SyncIndicator";
 import { useLiveSession } from "@/hooks/useLiveSession";
 import { usePresence } from "@/hooks/usePresence";
@@ -17,7 +17,7 @@ interface Props {
 }
 
 export function SpeakerDashboard({ session }: Props) {
-  const { liveState, connected, error, refresh } = useLiveSession(session.id);
+  const { liveState, connected, error, refresh, applyState } = useLiveSession(session.id);
   const [counts, setCounts] = useState({ audience: 0, total: 0, samePage: 0 });
   const [busy, setBusy] = useState(false);
   usePresence(session.id, "speaker");
@@ -36,17 +36,22 @@ export function SpeakerDashboard({ session }: Props) {
     async (type: SyncEventType, payload?: Record<string, unknown>) => {
       setBusy(true);
       try {
-        await fetch(`/api/session/${session.id}/event`, {
+        const res = await fetch(`/api/session/${session.id}/event`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type, payload }),
         });
-        void refresh();
+        if (res.ok) {
+          const state = (await res.json()) as LiveSessionState;
+          applyState(state);
+        } else {
+          void refresh();
+        }
       } finally {
         setBusy(false);
       }
     },
-    [session.id, refresh]
+    [session.id, refresh, applyState]
   );
 
   const currentIdx = session.sections.findIndex(s => s.id === liveState?.currentSectionId);

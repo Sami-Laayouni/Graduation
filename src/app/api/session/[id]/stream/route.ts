@@ -28,30 +28,33 @@ export async function GET(
     active: true,
     controller: null as ReadableStreamDefaultController | null,
     timer: null as ReturnType<typeof setTimeout> | ReturnType<typeof setInterval> | null,
+    heartbeat: null as ReturnType<typeof setInterval> | null,
   };
 
   const stream = new ReadableStream({
     async start(controller) {
       ctx.controller = controller;
 
-      // Send current state immediately
+      // Send current state immediately, then keep watching for changes.
       const initial = await getLiveState(id);
       let lastTimestamp = initial.timestamp;
       controller.enqueue(encode(`data: ${JSON.stringify(initial)}\n\n`));
 
+      // Always register for in-process push (instant on local dev / warm instances)
+      registerSse(id, controller);
+
+      ctx.heartbeat = setInterval(() => {
+        if (!ctx.active) return;
+        try { controller.enqueue(encode(": ping\n\n")); } catch { /* closed */ }
+      }, 15_000);
+
       if (!USE_REDIS) {
-        // Local dev: in-process broadcast — instant updates
-        registerSse(id, controller);
-        ctx.timer = setInterval(() => {
-          if (!ctx.active) return;
-          try { controller.enqueue(encode(": ping\n\n")); } catch { /* closed */ }
-        }, 15_000);
+        ctx.timer = ctx.heartbeat;
         return;
       }
 
-      // Production (Redis): poll every 2 s and push only when state changed.
-      // A lightweight timestamp read is used first; full state is fetched only on change.
-      const POLL_MS = 750;
+      // Production (Redis): poll frequently and push only when state changed.
+      const POLL_MS = 200;
       const poll = async () => {
         if (!ctx.active) return;
         try {
@@ -59,9 +62,6 @@ export async function GET(
           if (state.timestamp > lastTimestamp) {
             lastTimestamp = state.timestamp;
             controller.enqueue(encode(`data: ${JSON.stringify(state)}\n\n`));
-          } else {
-            // heartbeat keeps the connection alive without sending data
-            controller.enqueue(encode(": ping\n\n"));
           }
         } catch {
           ctx.active = false;
@@ -70,7 +70,7 @@ export async function GET(
         if (ctx.active) ctx.timer = setTimeout(poll, POLL_MS);
       };
 
-      ctx.timer = setTimeout(poll, POLL_MS);
+      ctx.timer = setTimeout(poll, 25);
     },
 
     cancel() {
@@ -79,7 +79,10 @@ export async function GET(
         clearTimeout(ctx.timer as ReturnType<typeof setTimeout>);
         clearInterval(ctx.timer as ReturnType<typeof setInterval>);
       }
-      if (!USE_REDIS && ctx.controller) {
+      if (ctx.heartbeat && ctx.heartbeat !== ctx.timer) {
+        clearInterval(ctx.heartbeat);
+      }
+      if (ctx.controller) {
         unregisterSse(id, ctx.controller);
       }
     },

@@ -18,16 +18,16 @@ export function LanguageWelcome({ language, onChange, hint }: Props) {
 
   return (
     <motion.div
-      className="flex flex-col items-center gap-8 w-full max-w-md mx-auto px-2"
+      className="flex flex-col items-center gap-5 sm:gap-8 w-full max-w-md mx-auto px-1 sm:px-2"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="text-center space-y-3">
-        <p className="font-serif text-2xl md:text-3xl text-white leading-snug">
+      <div className="text-center space-y-2 sm:space-y-3">
+        <p className="font-serif text-xl sm:text-2xl md:text-3xl text-white leading-snug px-1">
           {t.chooseLanguage}
         </p>
-        <p className="text-sm md:text-base" style={{ color: "rgba(220,232,250,0.72)" }}>
+        <p className="text-sm md:text-base px-2" style={{ color: "rgba(220,232,250,0.72)" }}>
           {t.languageHint}
         </p>
       </div>
@@ -47,7 +47,7 @@ export function LanguageWelcome({ language, onChange, hint }: Props) {
               aria-checked={selected}
               onClick={() => onChange(code)}
               className={clsx(
-                "w-full rounded-2xl border px-6 py-4 text-left transition-all duration-300 active:scale-[0.98]",
+                "w-full rounded-2xl border px-4 sm:px-6 py-3.5 sm:py-4 text-left transition-all duration-300 active:scale-[0.98] audience-touch min-h-[3.25rem]",
                 selected
                   ? "border-white/40 bg-white/12 text-white shadow-[0_0_32px_-8px_rgba(220,232,250,0.35)]"
                   : "border-white/14 bg-white/[0.04] text-white/80 hover:border-white/28 hover:bg-white/[0.07]",
@@ -55,7 +55,7 @@ export function LanguageWelcome({ language, onChange, hint }: Props) {
             >
               <span
                 className={clsx(
-                  "block font-serif text-xl md:text-2xl",
+                  "block font-serif text-lg sm:text-xl md:text-2xl",
                   code === "ar" && "text-right",
                 )}
                 dir={code === "ar" ? "rtl" : "ltr"}
@@ -81,7 +81,7 @@ export function LanguageWelcome({ language, onChange, hint }: Props) {
         <motion.p
           key={`${language}-${hint.slice(0, 24)}`}
           className={clsx(
-            "font-serif text-center text-lg md:text-xl text-white/90 leading-relaxed px-2",
+            "font-serif text-center text-base sm:text-lg md:text-xl text-white/90 leading-relaxed px-1 sm:px-2",
             language === "ar" && "rtl-flip",
           )}
           dir={language === "ar" ? "rtl" : "ltr"}

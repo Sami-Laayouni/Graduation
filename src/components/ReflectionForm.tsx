@@ -47,12 +47,12 @@ export function ReflectionForm({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       className={clsx(
-        "w-full max-w-md mx-auto flex flex-col gap-6 fairy-reflection-card p-8",
+        "w-full max-w-md mx-auto flex flex-col gap-4 sm:gap-6 fairy-reflection-card p-5 sm:p-7 md:p-8",
         isRtl && "rtl-flip"
       )}
       dir={isRtl ? "rtl" : "ltr"}
     >
-      <p className="prompt-text font-serif text-xl md:text-2xl text-center leading-relaxed"
+      <p className="prompt-text font-serif text-lg sm:text-xl md:text-2xl text-center leading-relaxed px-1"
         style={{ color: "rgba(232,236,244,0.95)" }}>
         {prompt.texts[language]}
       </p>
@@ -60,8 +60,8 @@ export function ReflectionForm({
       <textarea
         value={currentAnswer}
         onChange={(e) => onAnswer(prompt.id, e.target.value)}
-        rows={4}
-        className="ceremony-input w-full resize-none"
+        rows={3}
+        className="ceremony-input w-full resize-none min-h-[5.5rem] sm:min-h-[6.5rem]"
         placeholder="…"
         aria-label={prompt.texts[language]}
       />

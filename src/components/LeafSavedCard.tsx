@@ -28,7 +28,7 @@ function SectionCard({
   className?: string;
 }) {
   return (
-    <section className={clsx("w-full fairy-reflection-card p-5 md:p-6 space-y-4", className)}>
+    <section className={clsx("w-full fairy-reflection-card p-4 sm:p-5 md:p-6 space-y-3 sm:space-y-4", className)}>
       <h2 className="text-xs font-sans font-medium tracking-[0.22em] uppercase text-white/55">
         {title}
       </h2>
@@ -56,7 +56,7 @@ export function LeafSavedCard({
   return (
     <motion.div
       className={clsx(
-        "w-full max-w-lg mx-auto flex flex-col gap-5 pb-4",
+        "w-full max-w-lg mx-auto flex flex-col gap-4 sm:gap-5 pb-2 sm:pb-4 px-0.5 sm:px-0",
         isRtl && "rtl-flip",
       )}
       dir={isRtl ? "rtl" : "ltr"}
@@ -68,7 +68,7 @@ export function LeafSavedCard({
       <div className="flex flex-col items-center text-center gap-3 pt-2">
         {myLeafDNA ? (
           <div className="relative">
-            <LeafPreview dna={myLeafDNA} size={120} />
+            <LeafPreview dna={myLeafDNA} size={108} />
           </div>
         ) : (
           /* Placeholder while DNA loads (fades out when real leaf arrives) */
@@ -82,7 +82,7 @@ export function LeafSavedCard({
           <span className="inline-block rounded-full px-3 py-1 text-xs font-medium tracking-widest uppercase bg-white/10 border border-white/20 text-white/80">
             {s.savedBadge}
           </span>
-          <h1 className="font-serif text-2xl md:text-3xl text-white font-medium leading-tight">
+          <h1 className="font-serif text-xl sm:text-2xl md:text-3xl text-white font-medium leading-tight">
             {s.thankYouTitle}
           </h1>
           <p className="text-sm text-white/60 mt-1 leading-relaxed max-w-xs mx-auto">
@@ -94,14 +94,14 @@ export function LeafSavedCard({
       {/* Look up callout — single place to say "look up" */}
       <div
         className={clsx(
-          "w-full rounded-2xl px-5 py-4 text-center border",
+          "w-full rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 text-center border",
           lookUpNudge
             ? "bg-emerald-500/15 border-emerald-400/35"
             : "bg-white/[0.06] border-white/18",
         )}
       >
         <p className={clsx(
-          "font-serif text-lg md:text-xl font-medium",
+          "font-serif text-base sm:text-lg md:text-xl font-medium",
           lookUpNudge ? "text-emerald-100" : "text-white",
         )}>
           {lookUpNudge ? s.lookUpTitle : s.waitTitle}
@@ -151,7 +151,7 @@ export function LeafSavedCard({
         <AnimatePresence>
           {isPublic && (
             <motion.div
-              className="flex flex-col sm:flex-row gap-2"
+              className="flex flex-col gap-2"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
@@ -185,7 +185,7 @@ export function LeafSavedCard({
                   }
                 }}
                 className={clsx(
-                  "btn-ceremony shrink-0 px-4 py-2.5 text-sm",
+                  "btn-ceremony w-full sm:w-auto shrink-0 px-4 py-3 text-sm min-h-[2.75rem]",
                   publicState === "saved" && "border-emerald-400/40 text-emerald-200",
                 )}
               >

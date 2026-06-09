@@ -43,6 +43,28 @@ body {
     radial-gradient(ellipse 80% 55% at 50% -5%,  rgba(200, 216, 240, 0.04) 0%, transparent 60%),
     radial-gradient(ellipse 60% 40% at 10% 90%,  rgba(160, 190, 220, 0.03) 0%, transparent 50%),
     linear-gradient(180deg, #04060d 0%, #070b14 50%, #04060d 100%);
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+}
+
+/* Safe areas for notched phones + home indicator */
+.audience-safe-x {
+  padding-left:  max(0.75rem, env(safe-area-inset-left));
+  padding-right: max(0.75rem, env(safe-area-inset-right));
+}
+.audience-safe-top {
+  padding-top: max(0.625rem, env(safe-area-inset-top));
+}
+.audience-safe-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+/* Mobile-friendly touch targets */
+.audience-touch {
+  min-height: 2.75rem;
+  min-width:  2.75rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ── Caption card ───────────────────────────────────────────────────────── */
@@ -120,6 +142,7 @@ body {
 .fairy-btn {
   border-radius: 1rem;
   padding: 0.9rem 1.5rem;
+  min-height: 3rem;
   font-weight: 500;
   letter-spacing: 0.04em;
   transition: all 0.4s ease;
@@ -133,6 +156,8 @@ body {
   box-shadow: 0 0 28px -8px rgba(200, 216, 240, 0.2);
   display: block;
   text-align: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .fairy-btn:hover:not(:disabled) {
   box-shadow: 0 0 40px -6px rgba(200, 216, 240, 0.35);
@@ -146,12 +171,13 @@ body {
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   color: var(--text);
-  padding: 0.75rem 1rem;
+  padding: 0.875rem 1rem;
   width: 100%;
   resize: none;
   transition: border-color 0.3s;
-  font-size: 1rem;
+  font-size: 1rem; /* 16px — prevents iOS zoom on focus */
   line-height: 1.6;
+  min-height: 3rem;
 }
 .ceremony-input:focus {
   outline: none;
@@ -172,8 +198,15 @@ body {
   border-color: rgba(255, 255, 255, 0.5);
 }
 
-.large-text .caption-text  { font-size: 1.35rem; line-height: 1.7; }
-.large-text .prompt-text   { font-size: 1.1rem; }
+.large-text .caption-text  { font-size: clamp(1.125rem, 4.5vw, 1.35rem); line-height: 1.65; }
+.large-text .prompt-text   { font-size: clamp(1.05rem, 4vw, 1.2rem); }
+
+@media (max-width: 639px) {
+  .fairy-caption-card,
+  .fairy-reflection-card {
+    border-radius: 1rem;
+  }
+}
 
 /* ── RTL support ────────────────────────────────────────────────────────── */
 [dir="rtl"] .rtl-flip {

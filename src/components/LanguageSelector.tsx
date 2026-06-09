@@ -30,8 +30,8 @@ export function LanguageSelector({ value, onChange, compact }: Props) {
           aria-checked={value === code}
           onClick={() => onChange(code)}
           className={clsx(
-            "rounded-xl border transition-all duration-300",
-            compact ? "px-3 py-1.5 text-xs" : "px-5 py-3 text-base w-full text-left",
+            "rounded-xl border transition-all duration-300 audience-touch",
+            compact ? "px-2.5 py-2 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs min-h-[2.75rem]" : "px-5 py-3 text-base w-full text-left min-h-[3rem]",
             value === code
               ? "border-white/35 bg-white/12 text-white"
               : "border-white/12 bg-transparent text-white/60 hover:border-white/25 hover:text-white/85",

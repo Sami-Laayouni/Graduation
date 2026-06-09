@@ -33,7 +33,7 @@ export function CaptionDisplay({
           exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className={clsx(
-            "w-full p-5 sm:p-7 md:p-10",
+            "w-full p-4 sm:p-7 md:p-10",
             fairy ? "fairy-caption-card" : "caption-card",
             isRtl && "rtl-flip"
           )}
@@ -43,7 +43,7 @@ export function CaptionDisplay({
             className={clsx(
               "caption-text font-serif leading-relaxed text-center",
               fairy ? "text-white" : "text-ceremony-text",
-              large ? "text-xl sm:text-2xl md:text-3xl" : "text-base sm:text-lg md:text-xl"
+              large ? "text-xl sm:text-2xl md:text-3xl" : "text-lg sm:text-xl md:text-2xl"
             )}
           >
             {text}
@@ -65,7 +65,7 @@ export function CaptionDisplay({
               animate={{ opacity: [0.4, 1, 0.4] }}
               transition={{ duration: 2.5, repeat: Infinity }}
             />
-            <p className="text-ceremony-glow text-sm md:text-base tracking-[0.35em] uppercase font-sans">
+            <p className="text-ceremony-glow text-xs sm:text-sm md:text-base tracking-[0.2em] sm:tracking-[0.35em] uppercase font-sans text-center px-2">
               {lookUpLabel}
             </p>
             <motion.div

@@ -5,9 +5,16 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  return NextResponse.json(await getLiveState(id));
+  const since = Number(new URL(request.url).searchParams.get("since") ?? 0);
+  const state = await getLiveState(id);
+
+  if (since > 0 && state.timestamp <= since) {
+    return NextResponse.json({ unchanged: true, timestamp: state.timestamp });
+  }
+
+  return NextResponse.json(state);
 }

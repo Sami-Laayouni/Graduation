@@ -88,11 +88,11 @@ export async function setLiveState(
 
   if (USE_REDIS && redis) {
     await redis.set(stateKey(sessionId), next, { ex: SESSION_TTL });
-    return next;
+  } else {
+    getMemStore().liveStates.set(sessionId, next);
   }
 
-  // In-memory fallback
-  getMemStore().liveStates.set(sessionId, next);
+  // Push instantly to any SSE clients on this server instance (local dev + warm lambdas)
   broadcastMemState(sessionId, next);
   return next;
 }
