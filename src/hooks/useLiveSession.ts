@@ -35,7 +35,7 @@ export function useLiveSession(sessionId: string) {
     /** Start polling Redis via /state — only used when SSE is down */
     function startFallbackPoll() {
       if (pollRef.current) return;
-      pollRef.current = setInterval(refresh, 8_000);
+      pollRef.current = setInterval(refresh, 1_000);
     }
 
     /** Stop the fallback poll — SSE is healthy, no need to waste Redis reads */
@@ -73,7 +73,7 @@ export function useLiveSession(sessionId: string) {
         esRef.current = null;
         refresh();                           // immediate sync
         startFallbackPoll();                 // poll while SSE is reconnecting
-        reconnectTimer = setTimeout(connect, 3000);
+        reconnectTimer = setTimeout(connect, 1_200);
       };
     }
 

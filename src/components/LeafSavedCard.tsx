@@ -64,27 +64,34 @@ export function LeafSavedCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* Hero */}
-      <div className="flex flex-col items-center text-center gap-4 pt-2">
-        {myLeafDNA && <LeafPreview dna={myLeafDNA} size={88} />}
+      {/* Hero — large leaf preview so the person can identify it on the big screen */}
+      <div className="flex flex-col items-center text-center gap-3 pt-2">
+        {myLeafDNA ? (
+          <div className="relative">
+            <LeafPreview dna={myLeafDNA} size={120} />
+          </div>
+        ) : (
+          /* Placeholder while DNA loads (fades out when real leaf arrives) */
+          <div
+            className="rounded-full animate-pulse"
+            style={{ width: 80, height: 80, background: "rgba(200,216,240,0.08)" }}
+          />
+        )}
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <span className="inline-block rounded-full px-3 py-1 text-xs font-medium tracking-widest uppercase bg-white/10 border border-white/20 text-white/80">
             {s.savedBadge}
           </span>
           <h1 className="font-serif text-2xl md:text-3xl text-white font-medium leading-tight">
             {s.thankYouTitle}
           </h1>
-          <p className="font-serif text-xl text-white/90">
+          <p className="text-sm text-white/60 mt-1 leading-relaxed max-w-xs mx-auto">
             {s.thankYouSub}
-          </p>
-          <p className="text-sm text-white/55 mt-1 leading-relaxed max-w-xs mx-auto">
-            {s.privateNote}
           </p>
         </div>
       </div>
 
-      {/* Look up callout */}
+      {/* Look up callout — single place to say "look up" */}
       <div
         className={clsx(
           "w-full rounded-2xl px-5 py-4 text-center border",
@@ -101,6 +108,9 @@ export function LeafSavedCard({
         </p>
         <p className="mt-1.5 text-sm leading-relaxed text-white/65 max-w-sm mx-auto">
           {lookUpNudge ? s.lookUpSub : s.waitSub}
+        </p>
+        <p className="mt-2 text-xs text-white/35 leading-relaxed">
+          {s.privateNote}
         </p>
       </div>
 

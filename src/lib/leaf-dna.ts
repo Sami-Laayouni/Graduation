@@ -27,43 +27,62 @@ export function seedFromId(id: string): number {
   return h >>> 0;
 }
 
+/** Coerce stored seed to uint32 — always falls back to id hash so every leaf is unique */
+export function resolveLeafSeed(id: string, leafSeed?: unknown): number {
+  if (typeof leafSeed === "number" && Number.isFinite(leafSeed)) {
+    return leafSeed >>> 0;
+  }
+  if (typeof leafSeed === "string") {
+    const n = parseInt(leafSeed, 10);
+    if (Number.isFinite(n)) return n >>> 0;
+  }
+  return seedFromId(id);
+}
+
 /**
  * Leaf hues are picked from a curated palette of natural leaf colors:
  * warm amber, cool silver-blue, soft moss green, dusty rose — all very
  * desaturated so the B&W fantasy look is preserved.
  */
 const HUE_PALETTE = [
+   18,  // warm copper
    38,  // amber / warm golden
    52,  // yellow-green
+   75,  // fresh green
   105,  // moss green
+  145,  // sage
   165,  // sea-green / teal
+  195,  // cyan-teal
   210,  // cool silver-blue
   230,  // blue-grey
-  280,  // lavender (rare)
-   18,  // warm copper
+  260,  // soft violet
+  280,  // lavender
+  320,  // dusty rose
+  350,  // warm pink
 ];
 
 export function dnaFromRecord(
   r: Pick<LeafRecord, "id" | "createdAt" | "leafSeed" | "isPublic" | "username">,
 ): LeafDNA {
-  const next = rng32(r.leafSeed);
+  const seed = resolveLeafSeed(r.id, r.leafSeed);
+  const next = rng32(seed);
   // Draw all base properties first (same order as before — ensures existing leaves don't change)
   const canopyAngle  = next() * Math.PI * 2;
   const radiusMul    = 0.55 + next() * 0.50;
-  const rxMul        = 0.60 + next() * 0.75;
-  const ryMul        = 0.60 + next() * 0.75;
-  const scale        = 0.65 + next() * 0.80;
-  const brightOffset = -0.08 + next() * 0.22;
+  const rxMul        = 0.55 + next() * 0.85;
+  const ryMul        = 0.55 + next() * 0.85;
+  const scale        = 0.60 + next() * 0.90;
+  const brightOffset = -0.10 + next() * 0.28;
   const veinLines    = 1 + Math.floor(next() * 3);
-  // New: hue from palette + saturation (kept very low — subtle tint only)
+  // Palette slot + jitter so nearby hues don't read as identical on the tree
   const hueIdx       = Math.floor(next() * HUE_PALETTE.length);
-  const hue          = HUE_PALETTE[hueIdx];
-  const hueSat       = 0.10 + next() * 0.18; // 0.10–0.28 — barely perceptible, more like a "warmth"
+  const hue          = (HUE_PALETTE[hueIdx] + (next() - 0.5) * 28 + 360) % 360;
+  const hueSat       = 0.24 + next() * 0.48; // 0.24–0.72 — visibly distinct tints
 
   return {
     id:          r.id,
     createdAt:   r.createdAt,
-    seed:        r.leafSeed,
+    seed,
     canopyAngle,
     radiusMul,
     rxMul,

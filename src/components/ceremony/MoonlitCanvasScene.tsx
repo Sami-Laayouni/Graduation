@@ -23,7 +23,7 @@ import { leafMacroScale } from "@/lib/visual-progress";
 
 const SEASON_IDX: Record<Season, number> = { winter: 0, spring: 1, summer: 2, autumn: 3 };
 
-export type CanvasSceneMode = "cosmos" | "leaf" | "tree";
+export type CanvasSceneMode = "cosmos" | "leaf" | "tree" | "forest";
 
 interface Props {
   mode:                 CanvasSceneMode;
@@ -263,7 +263,9 @@ export function MoonlitCanvasScene({
       swayRef.current += (targetSway - swayRef.current) * swayLerp;
       const sway = swayRef.current;
 
-      if ((currentMode === "tree" || placing) && treeRef.current) {
+      // Forest mode — labeled trees + stars are in ForestSpaceOverlay (React layer)
+
+      if ((currentMode === "tree" || currentMode === "forest" || placing) && treeRef.current) {
         const hideId = placing && flyT < 0.98 ? newestId : undefined;
         ctx.save();
         const cx = w * 0.5, cy = h * 0.88;
@@ -308,7 +310,7 @@ export function MoonlitCanvasScene({
         }
       }
 
-      if (currentMode === "leaf" && !placing) {
+      if ((currentMode === "leaf") && !placing) {
         const sid    = sectionIdRef.current;
         const scale  = leafMacroScale(sid);
         const cx     = w * 0.5;
@@ -323,7 +325,9 @@ export function MoonlitCanvasScene({
         );
       }
 
-      drawGroundFog(ctx, w, h, p, t);
+      if (currentMode !== "forest") {
+        drawGroundFog(ctx, w, h, p, t);
+      }
 
       frameRef.current = requestAnimationFrame(paint);
     };

@@ -4,6 +4,7 @@
 import type { Star } from "./stars";
 import type { Branch, RootCurve, TreeData, BranchTip } from "./procedural-tree";
 import type { LeafDNA } from "@/lib/types";
+import { leafVisualFromDna, TREE_LEAF_SIZE_SCALE, leafRgbaFromStyle } from "@/lib/leaf-visual";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -409,7 +410,23 @@ function drawBranch(
 // ─── Audience leaves — anchored to real branch tips ──────────────────────────
 // Each leaf is placed at a real tip position from TreeData.tipPositions.
 // The tip index is derived deterministically from dna.seed so it never changes.
-// A tiny DNA-based offset lets multiple leaves cluster around the same tip naturally.
+// DNA-based offsets fan multiple leaves away from the same tip so they stay visible.
+
+function audienceLeafTipIndex(dna: LeafDNA, tipCount: number): number {
+  if (tipCount <= 0) return 0;
+  return ((dna.seed * 2654435761) >>> 0) % tipCount;
+}
+
+function audienceLeafOffset(dna: LeafDNA, tip: BranchTip) {
+  const r1 = 5 + dna.radiusMul * 24;
+  const a1 = dna.canopyAngle;
+  const r2 = 3 + dna.rxMul * 16;
+  const a2 = dna.brightOffset * Math.PI * 7 + dna.ryMul * 2.1;
+  return {
+    x: tip.x + Math.cos(a1) * r1 + Math.cos(a2) * r2,
+    y: tip.y + Math.sin(a1) * r1 + Math.sin(a2) * r2,
+  };
+}
 
 export function audienceLeafAnchor(
   tips:     BranchTip[],
@@ -429,35 +446,22 @@ export function audienceLeafAnchor(
     return { x: w * 0.52, y: h * 0.38, rot: -0.4, rx: 12, ry: 7 };
   }
 
-  const tipIdx = dna ? dna.seed % tips.length : Math.floor(tips.length * 0.42);
+  const tipIdx = dna ? audienceLeafTipIndex(dna, tips.length) : Math.floor(tips.length * 0.42);
   const tip    = tips[tipIdx];
-  const offAngle = dna?.canopyAngle ?? 0.5;
-  const offR     = dna ? 2 + dna.radiusMul * 8 : 5;
-  const rawX = tip.x + Math.cos(offAngle) * offR;
-  const rawY = tip.y + Math.sin(offAngle) * offR;
+  const { x: rawX, y: rawY } = dna ? audienceLeafOffset(dna, tip) : { x: tip.x, y: tip.y };
   const { x, y } = toScreen(rawX, rawY);
 
   const fan  = dna ? (dna.brightOffset - 0.5) * 0.62 : 0;
   const rot  = tip.angle + fan;
   const depthFactor = lerp(1.3, 0.82, tip.depth / 7);
-  const rx = dna
-    ? (8 + dna.rxMul * 7) * dna.scale * depthFactor
-    : 11 * depthFactor;
-  const ry = dna
-    ? (5 + dna.ryMul * 4) * dna.scale * depthFactor
-    : 7 * depthFactor;
-
+  let rx = 11 * depthFactor * treeScale;
+  let ry = 7 * depthFactor * treeScale;
+  if (dna) {
+    const vis = leafVisualFromDna(dna, TREE_LEAF_SIZE_SCALE * depthFactor * treeScale);
+    rx = vis.rx;
+    ry = vis.ry;
+  }
   return { x, y, rot, rx, ry };
-}
-
-function seasonLeafTint(seasonIdx: number): { h: number; s: number } {
-  // Moonlit B&W palette — each season shifts leaves naturally, never rainbow
-  return ([
-    { h: 212, s: 0.09 },  // winter — frosty blue-white
-    { h: 118, s: 0.15 },  // spring — soft green
-    { h: 98,  s: 0.22 },  // summer — lush green
-    { h: 32,  s: 0.17 },  // autumn — warm amber
-  ] as const)[seasonIdx] ?? { h: 210, s: 0.10 };
 }
 
 export function drawAudienceLeaves(
@@ -471,68 +475,55 @@ export function drawAudienceLeaves(
   hideNewestId?:    string,
 ) {
   if (leaves.length === 0 || tips.length === 0) return;
-  const t  = seasonTint(p.seasonIdx);
   const sz = p.stage ? 1.35 : 1.0;
   const morph = Math.sin(Math.min(1, Math.max(0, seasonMorphPulse)) * Math.PI);
-  const seasonLeaf = seasonLeafTint(p.seasonIdx);
 
   for (const dna of leaves) {
     if (hideNewestId && dna.id === hideNewestId) continue;
-    const tipIdx = dna.seed % tips.length;
+    const tipIdx = audienceLeafTipIndex(dna, tips.length);
     const tip    = tips[tipIdx];
+    const { x, y } = audienceLeafOffset(dna, tip);
 
-    // Small scatter so multiple leaves at the same tip fan out naturally
-    const offAngle = dna.canopyAngle;
-    const offR     = 2 + dna.radiusMul * 8;
-    const x = tip.x + Math.cos(offAngle) * offR;
-    const y = tip.y + Math.sin(offAngle) * offR;
-
-    // Orientation: follow the branch direction + very gentle individual fan (±18°)
-    const fan  = (dna.brightOffset - 0.5) * 0.62; // ±0.31 rad — subtle, stays readable
+    const fan  = (dna.brightOffset - 0.5) * 0.85;
     const sway = Math.sin(time * 0.35 + dna.seed * 0.00009) * 0.055;
-    const rot  = tip.angle + fan + sway;
+    const rot  = tip.angle + fan + sway + (dna.rxMul - dna.ryMul) * 0.12;
 
-    // Consistent leaf shape — no extreme asymmetry or wild tip sharpness
     const depthFactor = lerp(1.3, 0.82, tip.depth / 7);
-    const morphScale  = 1 + morph * 0.12;
-    const rx = (8 + dna.rxMul * 7)   * dna.scale * sz * depthFactor * morphScale;
-    const ry = (5 + dna.ryMul * 4)   * dna.scale * sz * depthFactor * morphScale;
-    const tipSharp = 0.88 + dna.rxMul * 0.16;
+    const morphScale  = 1 + morph * 0.08;
+    const sizeScale   = TREE_LEAF_SIZE_SCALE * sz * depthFactor * morphScale * (0.88 + dna.scale * 0.18);
+    const vis = leafVisualFromDna(dna, sizeScale);
+    const { rx, ry } = vis;
 
-    const bv = Math.min(1.0, 0.85 + dna.brightOffset * 0.16 + (p.stage ? 0.12 : 0) + morph * 0.10);
-    // Per-leaf variation stays tiny — color comes from the active season
-    const hueJitter = ((dna.seed % 100) / 100 - 0.5) * 6;
-    const lh = seasonLeaf.h + hueJitter;
-    const ls = seasonLeaf.s * (0.88 + dna.brightOffset * 0.18);
-    const leafCol = (v: number, a: number) => hsv(lh, ls, v, a);
+    const leafCol = (lightnessMult: number, a: number) =>
+      leafRgbaFromStyle(vis, a, lightnessMult);
 
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(rot);
 
-    ctx.shadowColor = leafCol(bv, 0.50);
-    ctx.shadowBlur  = (p.stage ? 7 : 4) + morph * (p.stage ? 14 : 8);
+    ctx.shadowColor = leafCol(1, 0.50);
+    ctx.shadowBlur  = (p.stage ? 7 : 4) + morph * (p.stage ? 10 : 6);
 
     const isNew = dna.id === newestId;
     if (isNew) {
       const pulse = 0.55 + 0.45 * Math.sin(time * 3.4);
-      ctx.shadowColor = leafCol(1.0, p.stage ? 0.95 : 0.82);
+      ctx.shadowColor = leafCol(1, p.stage ? 0.95 : 0.82);
       ctx.shadowBlur  = (p.stage ? 44 : 28) * pulse;
     }
 
-    // Simple top-to-bottom gradient — moonlit tip, darker base
     const grad = ctx.createLinearGradient(0, ry, 0, -ry);
-    grad.addColorStop(0,    leafCol(bv * 0.60, p.stage ? 0.78 : 0.65));
-    grad.addColorStop(0.45, leafCol(bv,        p.stage ? 1.00 : 0.94));
-    grad.addColorStop(1,    leafCol(bv * 0.82, p.stage ? 0.88 : 0.76));
+    grad.addColorStop(0,    leafCol(0.72, p.stage ? 0.78 : 0.65));
+    grad.addColorStop(0.45, leafCol(1,    p.stage ? 1.00 : 0.94));
+    grad.addColorStop(1,    leafCol(0.88, p.stage ? 0.88 : 0.76));
     ctx.fillStyle = grad;
-    tracLeafPath(ctx, rx, ry, 0, tipSharp);
+    const tipSharp = 0.74 + dna.rxMul * 0.24 + (dna.veinLines - 1) * 0.05;
+    const asym     = (dna.rxMul - dna.ryMul) * rx * 0.22;
+    tracLeafPath(ctx, rx, ry, asym, tipSharp);
     ctx.fill();
 
     ctx.shadowBlur = 0;
 
-    // Midrib
-    ctx.strokeStyle = leafCol(bv * 1.22, p.stage ? 0.62 : 0.48);
+    ctx.strokeStyle = leafCol(1.08, p.stage ? 0.62 : 0.48);
     ctx.lineWidth   = 0.55;
     ctx.lineCap     = "round";
     ctx.beginPath();
@@ -540,8 +531,7 @@ export function drawAudienceLeaves(
     ctx.lineTo(0, -ry * 0.82);
     ctx.stroke();
 
-    // One pair of side veins — clean and subtle
-    ctx.strokeStyle = leafCol(bv * 1.08, p.stage ? 0.34 : 0.22);
+    ctx.strokeStyle = leafCol(1, p.stage ? 0.34 : 0.22);
     ctx.lineWidth   = 0.4;
     const vx = 0, vy = ry * 0.18;
     for (const side of [-1, 1]) {
@@ -552,6 +542,175 @@ export function drawAudienceLeaves(
     }
 
     ctx.restore();
+  }
+}
+
+// ─── Distant forest silhouettes ──────────────────────────────────────────────
+// Draws 20+ small glowing tree silhouettes to create a "cosmos of purposes"
+// effect behind the main tree during the forest_zoom sections.
+// All positions/shapes are deterministic — no per-frame randomness.
+
+const FOREST_SLOTS: Array<{ fx: number; fy: number; depth: number; phase: number }> = [
+  // Ground row (near foreground — largest / brightest)
+  { fx: 0.08, fy: 0.97, depth: 0.15, phase: 0.0  },
+  { fx: 0.22, fy: 0.96, depth: 0.20, phase: 1.1  },
+  { fx: 0.38, fy: 0.98, depth: 0.18, phase: 2.3  },
+  { fx: 0.63, fy: 0.97, depth: 0.17, phase: 0.8  },
+  { fx: 0.78, fy: 0.96, depth: 0.22, phase: 3.1  },
+  { fx: 0.93, fy: 0.97, depth: 0.14, phase: 1.9  },
+  // Mid-ground row
+  { fx: 0.06, fy: 0.88, depth: 0.36, phase: 2.7  },
+  { fx: 0.18, fy: 0.86, depth: 0.38, phase: 0.4  },
+  { fx: 0.32, fy: 0.87, depth: 0.35, phase: 3.6  },
+  { fx: 0.68, fy: 0.86, depth: 0.40, phase: 1.5  },
+  { fx: 0.82, fy: 0.88, depth: 0.33, phase: 4.2  },
+  { fx: 0.95, fy: 0.87, depth: 0.37, phase: 0.9  },
+  // Far mid row
+  { fx: 0.12, fy: 0.76, depth: 0.58, phase: 5.1  },
+  { fx: 0.28, fy: 0.75, depth: 0.62, phase: 2.0  },
+  { fx: 0.44, fy: 0.77, depth: 0.55, phase: 3.3  },
+  { fx: 0.58, fy: 0.74, depth: 0.60, phase: 0.6  },
+  { fx: 0.74, fy: 0.76, depth: 0.57, phase: 4.8  },
+  { fx: 0.88, fy: 0.75, depth: 0.63, phase: 1.3  },
+  // Distant background (tiny — like stars)
+  { fx: 0.09, fy: 0.64, depth: 0.78, phase: 3.8  },
+  { fx: 0.25, fy: 0.62, depth: 0.82, phase: 0.2  },
+  { fx: 0.42, fy: 0.65, depth: 0.76, phase: 5.5  },
+  { fx: 0.60, fy: 0.63, depth: 0.80, phase: 2.5  },
+  { fx: 0.77, fy: 0.64, depth: 0.79, phase: 1.8  },
+  { fx: 0.92, fy: 0.62, depth: 0.83, phase: 4.0  },
+  // Ultra-distant specks
+  { fx: 0.16, fy: 0.52, depth: 0.92, phase: 0.7  },
+  { fx: 0.36, fy: 0.50, depth: 0.94, phase: 3.2  },
+  { fx: 0.55, fy: 0.53, depth: 0.91, phase: 1.6  },
+  { fx: 0.72, fy: 0.51, depth: 0.95, phase: 4.5  },
+];
+
+export function drawDistantForest(
+  ctx:  CanvasRenderingContext2D,
+  w:    number,
+  h:    number,
+  p:    ScenePalette,
+  time: number,
+) {
+  const t = seasonTint(p.seasonIdx);
+
+  // Deep atmospheric darkening at the horizon to silhouette the trees
+  const horizonGrad = ctx.createLinearGradient(0, h * 0.50, 0, h);
+  horizonGrad.addColorStop(0,   "rgba(0,0,0,0)");
+  horizonGrad.addColorStop(0.6, "rgba(0,0,0,0.28)");
+  horizonGrad.addColorStop(1,   "rgba(0,0,0,0.55)");
+  ctx.fillStyle = horizonGrad;
+  ctx.fillRect(0, h * 0.50, w, h * 0.50);
+
+  for (const s of FOREST_SLOTS) {
+    // Only far-background specks — labeled hero trees live in ForestSpaceOverlay
+    if (s.depth < 0.55) continue;
+
+    // depth 0 = foreground (near), 1 = distant (far)
+    const treeH = h * lerp(0.34, 0.022, s.depth);
+    const bx    = s.fx * w;
+    const by    = s.fy * h;
+    const op    = lerp(0.88, 0.12, s.depth) * (p.stage ? 1.15 : 1.0);
+    const sway  = Math.sin(time * 0.22 + s.phase) * 0.018 * lerp(1, 0.4, s.depth);
+    const bv    = lerp(0.68, 0.32, s.depth) * (p.stage ? 1.2 : 1.0);
+    const lw    = Math.max(0.5, treeH * 0.055);
+
+    ctx.save();
+    ctx.globalAlpha = op;
+
+    // Soft atmospheric glow around canopy
+    const glowR  = treeH * lerp(1.1, 0.85, s.depth);
+    const gAlpha = lerp(0.22, 0.08, s.depth);
+    const glow   = ctx.createRadialGradient(
+      bx, by - treeH * 0.72, 0,
+      bx, by - treeH * 0.72, glowR,
+    );
+    glow.addColorStop(0,   rgba(t.r * 1.15, t.g * 1.15, t.b * 1.25, gAlpha));
+    glow.addColorStop(0.5, rgba(t.r, t.g, t.b, gAlpha * 0.35));
+    glow.addColorStop(1,   rgba(t.r, t.g, t.b, 0));
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(bx, by - treeH * 0.72, glowR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Solid canopy silhouette — this is what makes the trees clearly readable
+    const canopyR  = treeH * lerp(0.38, 0.22, s.depth);
+    const canopyY  = by - treeH * 0.78;
+    const canopyFill = ctx.createRadialGradient(
+      bx, canopyY, 0,
+      bx, canopyY, canopyR,
+    );
+    const cAlpha = lerp(0.82, 0.30, s.depth);
+    canopyFill.addColorStop(0,   tinted(bv * 0.65, t, cAlpha));
+    canopyFill.addColorStop(0.7, tinted(bv * 0.50, t, cAlpha * 0.80));
+    canopyFill.addColorStop(1,   tinted(bv * 0.35, t, 0));
+    ctx.fillStyle = canopyFill;
+    ctx.beginPath();
+    ctx.ellipse(bx, canopyY, canopyR, canopyR * 0.88, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Trunk + branches (sway applied via transform)
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.rotate(sway);
+    ctx.translate(-bx, -by);
+
+    const col = tinted(bv, t, 0.95);
+    ctx.strokeStyle = col;
+    ctx.lineCap     = "round";
+    ctx.lineJoin    = "round";
+
+    // Trunk
+    ctx.lineWidth = lw;
+    ctx.beginPath();
+    ctx.moveTo(bx, by);
+    ctx.bezierCurveTo(
+      bx + treeH * 0.04, by - treeH * 0.22,
+      bx - treeH * 0.02, by - treeH * 0.42,
+      bx,                by - treeH * 0.52,
+    );
+    ctx.stroke();
+
+    // Main branches
+    ctx.lineWidth = lw * 0.72;
+    ctx.beginPath();
+    ctx.moveTo(bx,                 by - treeH * 0.30);
+    ctx.bezierCurveTo(
+      bx - treeH * 0.12, by - treeH * 0.54,
+      bx - treeH * 0.30, by - treeH * 0.74,
+      bx - treeH * 0.34, by - treeH * 0.86,
+    );
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(bx,                 by - treeH * 0.36);
+    ctx.bezierCurveTo(
+      bx + treeH * 0.14, by - treeH * 0.56,
+      bx + treeH * 0.28, by - treeH * 0.72,
+      bx + treeH * 0.30, by - treeH * 0.84,
+    );
+    ctx.stroke();
+
+    // Upper twigs (only on near/mid trees)
+    if (s.depth < 0.78) {
+      ctx.lineWidth = lw * 0.48;
+      ctx.beginPath();
+      ctx.moveTo(bx,                 by - treeH * 0.52);
+      ctx.lineTo(bx - treeH * 0.15,  by - treeH * 1.00);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(bx,                 by - treeH * 0.52);
+      ctx.lineTo(bx + treeH * 0.12,  by - treeH * 0.98);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(bx,                 by - treeH * 0.52);
+      ctx.lineTo(bx,                  by - treeH * 1.06);
+      ctx.stroke();
+    }
+
+    ctx.restore(); // sway
+    ctx.restore(); // opacity
   }
 }
 
@@ -593,11 +752,9 @@ export function drawTree(
     seasonMorphPulse, hideNewestId,
   );
 
-  ctx.restore();
+  ctx.restore(); // end sway
 
-  ctx.restore();
-
-  // Canopy glow halo (static — outside sway)
+  // Canopy glow halo — drawn while globalAlpha = treeAlpha is still active
   if (audienceLeaves.length > 0) {
     const canopyCx = bx;
     const canopyCy = by - trunkH * 0.82;
@@ -617,7 +774,7 @@ export function drawTree(
     ctx.fill();
   }
 
-  ctx.restore();
+  ctx.restore(); // end globalAlpha = treeAlpha
 }
 
 // ─── Macro leaf (ASI speech) ──────────────────────────────────────────────────

@@ -40,22 +40,16 @@ interface NameStyle {
   fontWeight?: number;
 }
 
-/** Subtle accent tints for shout-out classmates */
+/** Very subtle accent tints for shout-out classmates */
 const NAME_STYLE: Record<string, NameStyle> = {
   "Bilal Nour Elheggach": {
-    color:       "rgba(210, 240, 220, 0.95)",
-    textShadow:  "0 0 14px rgba(110, 231, 160, 0.22)",
-    fontWeight:  500,
+    color: "rgba(222, 236, 226, 0.93)",
   },
   "Hiba El Idrissi": {
-    color:       "rgba(245, 235, 210, 0.95)",
-    textShadow:  "0 0 14px rgba(251, 191, 36, 0.20)",
-    fontWeight:  500,
+    color: "rgba(234, 230, 220, 0.93)",
   },
   "Mohammed El Idrissi": {
-    color:       "rgba(215, 228, 248, 0.95)",
-    textShadow:  "0 0 14px rgba(147, 197, 253, 0.22)",
-    fontWeight:  500,
+    color: "rgba(220, 228, 244, 0.93)",
   },
 };
 
@@ -78,7 +72,7 @@ export function ClassmatesBoard({ stage = false }: Props) {
       if (!el) return;
       const vh      = window.innerHeight;
       const content = el.offsetHeight;
-      const pxPerSec = stage ? 62 : 52;
+      const pxPerSec = stage ? 52 : 44;
 
       // Start almost in view — header peeks in immediately, names follow fast
       const start = vh - rowPx * 3;

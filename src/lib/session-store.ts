@@ -120,7 +120,8 @@ export async function registerUserSession(userSession: UserSession): Promise<voi
 
 export async function touchUserSession(
   sessionId: string,
-  userSessionId: string
+  userSessionId: string,
+  currentSectionId?: string,
 ): Promise<void> {
   if (USE_REDIS && redis) {
     const raw = await redis.get<UserSession[]>(presenceKey(sessionId));
@@ -128,6 +129,7 @@ export async function touchUserSession(
     const item = raw.find((u) => u.id === userSessionId);
     if (item) {
       item.lastSeenAt = new Date().toISOString();
+      if (currentSectionId) item.currentSectionId = currentSectionId;
       await redis.set(presenceKey(sessionId), raw, { ex: SESSION_TTL });
     }
     return;
@@ -135,7 +137,10 @@ export async function touchUserSession(
 
   const list = getMemStore().userSessions.get(sessionId) ?? [];
   const item = list.find((u) => u.id === userSessionId);
-  if (item) item.lastSeenAt = new Date().toISOString();
+  if (item) {
+    item.lastSeenAt = new Date().toISOString();
+    if (currentSectionId) item.currentSectionId = currentSectionId;
+  }
 }
 
 export async function getConnectedCounts(sessionId: string): Promise<{
@@ -143,8 +148,11 @@ export async function getConnectedCounts(sessionId: string): Promise<{
   speaker: number;
   projector: number;
   total: number;
+  samePage: number;
 }> {
   const cutoff = Date.now() - 60_000;
+  const live = await getLiveState(sessionId);
+  const targetSection = live.currentSectionId;
 
   let list: UserSession[] = [];
   if (USE_REDIS && redis) {
@@ -153,11 +161,12 @@ export async function getConnectedCounts(sessionId: string): Promise<{
     list = getMemStore().userSessions.get(sessionId) ?? [];
   }
 
-  const active   = list.filter((u) => new Date(u.lastSeenAt).getTime() > cutoff);
-  const audience  = active.filter((u) => u.deviceType === "audience").length;
+  const active    = list.filter((u) => new Date(u.lastSeenAt).getTime() > cutoff);
+  const audience  = active.filter((u) => u.deviceType === "audience");
   const speaker   = active.filter((u) => u.deviceType === "speaker").length;
   const projector = active.filter((u) => u.deviceType === "projector").length;
-  return { audience, speaker, projector, total: active.length };
+  const samePage  = audience.filter((u) => u.currentSectionId === targetSection).length;
+  return { audience: audience.length, speaker, projector, total: active.length, samePage };
 }
 
 // ── Leaf count helpers (mutate liveState) ────────────────────────────────────

@@ -11,22 +11,45 @@
  */
 import type { LeafRecord } from "./types";
 import { redis, USE_REDIS, SESSION_TTL } from "./kv";
+import { buildDemoLeafRecords } from "./seed-demo-leaves";
+import { resolveLeafSeed } from "./leaf-dna";
 
 // ── Redis List helpers ────────────────────────────────────────────────────────
 
-/** Each element in the list is a JSON-stringified LeafRecord */
+/** Each element in the list is a LeafRecord (Upstash auto-serializes/deserializes JSON) */
 const leafListKey = (sessionId: string) => `session:${sessionId}:leafList`;
 
+/**
+ * Upstash @upstash/redis automatically deserializes JSON values stored in Redis
+ * lists. This means items returned by lrange are already parsed objects, NOT
+ * raw JSON strings. Calling JSON.parse on an already-parsed object would give
+ * JSON.parse("[object Object]") → SyntaxError. This helper handles both old
+ * data (stored as a raw JSON string before this fix) and new data (stored as
+ * an object via Upstash auto-serialization).
+ */
+function normalizeLeafRecord(raw: Partial<LeafRecord> & Pick<LeafRecord, "id">): LeafRecord {
+  const leafSeed = resolveLeafSeed(raw.id, raw.leafSeed);
+  return { ...raw, leafSeed } as LeafRecord;
+}
+
+function parseLeafItem(item: unknown): LeafRecord {
+  if (typeof item === "string") {
+    try { return normalizeLeafRecord(JSON.parse(item) as LeafRecord); } catch { /* fall through */ }
+  }
+  return normalizeLeafRecord(item as LeafRecord);
+}
+
 async function redisSaveLeaf(leaf: LeafRecord): Promise<void> {
-  // RPUSH is atomic — safe under concurrent load
-  await redis!.rpush(leafListKey(leaf.sessionId), JSON.stringify(leaf));
+  // Pass the object directly — let @upstash/redis handle JSON serialization.
+  // RPUSH is atomic — safe under concurrent load.
+  await redis!.rpush(leafListKey(leaf.sessionId), leaf as unknown as string);
   // Refresh TTL on every write
   await redis!.expire(leafListKey(leaf.sessionId), SESSION_TTL);
 }
 
 async function redisGetLeaves(sessionId: string): Promise<LeafRecord[]> {
   const items = await redis!.lrange(leafListKey(sessionId), 0, -1);
-  return items.map((item) => JSON.parse(item as string) as LeafRecord);
+  return items.map(parseLeafItem);
 }
 
 async function redisGetLeafCount(sessionId: string): Promise<number> {
@@ -43,14 +66,15 @@ async function redisUpdateLeaf(
   // Find the last submission by this user
   let targetIdx = -1;
   for (let i = items.length - 1; i >= 0; i--) {
-    const leaf = JSON.parse(items[i] as string) as LeafRecord;
+    const leaf = parseLeafItem(items[i]);
     if (leaf.userSessionId === userSessionId) { targetIdx = i; break; }
   }
   if (targetIdx < 0) return null;
-  const leaf    = JSON.parse(items[targetIdx] as string) as LeafRecord;
+  const leaf    = parseLeafItem(items[targetIdx]);
   const updated = { ...leaf, ...fields, updatedAt: fields.updatedAt ?? new Date().toISOString() };
-  // LSET is an atomic point-update — no full-list rewrite needed
-  await redis!.lset(key, targetIdx, JSON.stringify(updated));
+  // LSET is an atomic point-update — no full-list rewrite needed.
+  // Pass the object directly so @upstash/redis serializes it consistently.
+  await redis!.lset(key, targetIdx, updated as unknown as string);
   return updated;
 }
 
@@ -165,4 +189,30 @@ export async function clearLeaves(sessionId: string): Promise<void> {
   const all = fsLoadAll();
   _cache = all.filter(l => l.sessionId !== sessionId);
   fsPersist(_cache);
+}
+
+/** Append demo leaves — each with unique DNA, as if submitted by real audience members */
+export async function seedDemoLeaves(sessionId: string, count = 100): Promise<number> {
+  const leaves = buildDemoLeafRecords(sessionId, count);
+  if (leaves.length === 0) return 0;
+
+  if (USE_REDIS && redis) {
+    const key = leafListKey(sessionId);
+    const pipe = redis.pipeline();
+    for (const leaf of leaves) {
+      // Explicit JSON so leafSeed is never dropped by batch pipeline serialization
+      pipe.rpush(key, JSON.stringify(leaf));
+    }
+    pipe.expire(key, SESSION_TTL);
+    await pipe.exec();
+    return leaves.length;
+  }
+
+  const all = fsLoadAll();
+  for (const leaf of leaves) {
+    if (!all.find((l) => l.id === leaf.id)) all.push(leaf);
+  }
+  _cache = all;
+  fsPersist(all);
+  return leaves.length;
 }

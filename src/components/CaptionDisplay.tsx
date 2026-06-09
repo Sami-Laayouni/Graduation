@@ -24,16 +24,16 @@ export function CaptionDisplay({
   const isRtl = language === "ar";
 
   return (
-    <div className="flex flex-col items-center gap-8 w-full max-w-lg mx-auto px-4">
+    <div className="flex flex-col items-center gap-6 w-full max-w-lg mx-auto px-3">
       <AnimatePresence mode="wait">
         <motion.div
           key={text.slice(0, 48)}
-          initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+          initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          exit={{ opacity: 0, y: -12, filter: "blur(4px)" }}
-          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className={clsx(
-            "w-full p-8 md:p-10",
+            "w-full p-5 sm:p-7 md:p-10",
             fairy ? "fairy-caption-card" : "caption-card",
             isRtl && "rtl-flip"
           )}
@@ -43,7 +43,7 @@ export function CaptionDisplay({
             className={clsx(
               "caption-text font-serif leading-relaxed text-center",
               fairy ? "text-white" : "text-ceremony-text",
-              large ? "text-2xl md:text-3xl" : "text-lg md:text-xl"
+              large ? "text-xl sm:text-2xl md:text-3xl" : "text-base sm:text-lg md:text-xl"
             )}
           >
             {text}

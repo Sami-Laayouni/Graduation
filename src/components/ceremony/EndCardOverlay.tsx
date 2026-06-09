@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Props {
   visible: boolean;
@@ -46,56 +46,21 @@ function Shimmer({ stage }: { stage: boolean }) {
 }
 
 /**
- * Highlighted word with a ✦ star precisely over the dot of the "i".
+ * Highlighted word with a ✦ star over the dot of the "i".
  *
- * We measure the actual pixel position of the "i" character after mount
- * using getBoundingClientRect — the only way to get the right spot in a
- * proportional serif font where "m" is 3× wider than "i".
+ * The star is a child of the "i" character's own span so its position is
+ * always exact — no JS measurement, no font-load race conditions.
  *
- * The star animates in after a delay so the brief initial position (50%)
- * is never visible.
+ * The "i" span is display:inline-block with lineHeight:1 so its height
+ * equals exactly 1em.  bottom:"72%" places the star's bottom edge just
+ * above the dot (which sits at ~70% from the span's bottom in serif fonts).
  */
 function StarWord({ word, stage, delay }: { word: string; stage: boolean; delay: number }) {
-  const containerRef = useRef<HTMLSpanElement>(null);
-  const iCharRef     = useRef<HTMLSpanElement>(null);
-  const [starLeft, setStarLeft] = useState<number | null>(null);
-
   const iIdx = word.toLowerCase().indexOf("i");
-
-  useEffect(() => {
-    function measure() {
-      if (!containerRef.current) return;
-      const containerRect = containerRef.current.getBoundingClientRect();
-
-      if (iCharRef.current) {
-        const iRect = iCharRef.current.getBoundingClientRect();
-        setStarLeft(iRect.left - containerRect.left + iRect.width / 2);
-      } else {
-        // No "i" — centre over the whole word
-        setStarLeft(containerRect.width / 2);
-      }
-    }
-
-    measure();
-
-    // Re-measure if the window resizes (font size / layout changes)
-    const ro = new ResizeObserver(measure);
-    if (containerRef.current) ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, [word]);
-
-  const wordContent = iIdx >= 0 ? (
-    <>
-      {word.slice(0, iIdx)}
-      <span ref={iCharRef}>{word[iIdx]}</span>
-      {word.slice(iIdx + 1)}
-    </>
-  ) : word;
 
   return (
     <motion.span
-      ref={containerRef}
-      className="relative inline-block"
+      className="inline"
       style={{
         fontStyle: "normal",
         color: "#ffffff",
@@ -105,28 +70,41 @@ function StarWord({ word, stage, delay }: { word: string; stage: boolean; delay:
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5, delay }}
     >
-      {/* Star renders only once measured so it never flashes at wrong position */}
-      {starLeft !== null && (
-        <motion.span
-          className="absolute select-none pointer-events-none"
-          style={{
-            left: starLeft,
-            top: stage ? "-0.80em" : "-0.72em",
-            transform: "translateX(-50%)",
-            fontSize: stage ? "0.50em" : "0.44em",
-            lineHeight: 1,
-            fontStyle: "normal",
-            color: "#ffe98a",
-            textShadow: "0 0 10px rgba(255,220,80,0.95), 0 0 20px rgba(255,200,60,0.55)",
-          }}
-          initial={{ opacity: 0, y: 5, scale: 0.3 }}
-          animate={{ opacity: [0, 1, 0.88, 1], y: [5, 0, 0, 0], scale: [0.3, 1.2, 0.95, 1.05] }}
-          transition={{ duration: 0.9, delay: delay + 0.1, times: [0, 0.35, 0.65, 1], ease: ease() }}
-        >
-          ✦
-        </motion.span>
+      {iIdx < 0 ? word : (
+        <>
+          {word.slice(0, iIdx)}
+          {/* relative inline-block with lineHeight:1 gives a crisp 1em box */}
+          <span style={{ position: "relative", display: "inline-block", lineHeight: 1 }}>
+            <motion.span
+              aria-hidden
+              className="absolute select-none pointer-events-none"
+              style={{
+                /*
+                 * Dot position in Times New Roman (Windows default serif):
+                 *   baseline ≈ 22% from span-bottom (lineHeight:1)
+                 *   dot-center ≈ 72% of em above baseline → 22+72 = 94% from span-bottom
+                 * Star center = bottom + half-star-height (25%) → bottom = 94-25 = 69%
+                 */
+                bottom: "69%",
+                left: "50%",
+                transform: "translateX(-50%)",
+                fontSize: stage ? "0.48em" : "0.42em",
+                lineHeight: 1,
+                fontStyle: "normal",
+                color: "#ffe98a",
+                textShadow: "0 0 10px rgba(255,220,80,0.95), 0 0 20px rgba(255,200,60,0.55)",
+              }}
+              initial={{ opacity: 0, y: 4, scale: 0.3 }}
+              animate={{ opacity: [0, 1, 0.88, 1], y: [4, 0, 0, 0], scale: [0.3, 1.2, 0.95, 1.05] }}
+              transition={{ duration: 0.9, delay: delay + 0.1, times: [0, 0.35, 0.65, 1], ease: ease() }}
+            >
+              ✦
+            </motion.span>
+            {word[iIdx]}
+          </span>
+          {word.slice(iIdx + 1)}
+        </>
       )}
-      {wordContent}
     </motion.span>
   );
 }
@@ -178,7 +156,7 @@ function HighlightedQuote({
             initial={{ opacity: 0, filter: "blur(4px)" }}
             animate={{ opacity: 1, filter: "blur(0px)" }}
             transition={{ duration: 0.5, delay: wordDelay, ease: ease() }}
-            style={{ color: "rgba(210,228,252,0.78)" }}
+            style={{ color: "rgba(218,234,255,0.92)" }}
           >
             {raw}{" "}
           </motion.span>
@@ -241,10 +219,13 @@ export function EndCardOverlay({ visible, cueText, stage = true }: Props) {
             >
               <div className="h-px w-20 md:w-32 bg-gradient-to-r from-transparent to-white/40" />
               <span
-                className={`tracking-[0.38em] uppercase font-sans font-medium ${
-                  stage ? "text-xs md:text-sm" : "text-[10px] md:text-xs"
+                className={`tracking-[0.38em] uppercase font-sans font-semibold ${
+                  stage ? "text-sm md:text-base" : "text-xs md:text-sm"
                 }`}
-                style={{ color: "rgba(200,218,248,0.60)" }}
+                style={{
+                  color: "rgba(220,234,255,0.92)",
+                  textShadow: "0 0 18px rgba(180,210,255,0.50), 0 2px 8px rgba(0,0,0,0.85)",
+                }}
               >
                 Class of 2026
               </span>
@@ -274,7 +255,7 @@ export function EndCardOverlay({ visible, cueText, stage = true }: Props) {
             {/* Accent divider */}
             <motion.div
               className={`rounded-full ${stage ? "h-px w-40 md:w-72" : "h-px w-28 md:w-52"}`}
-              style={{ background: "linear-gradient(90deg, transparent, rgba(200,218,248,0.55), transparent)" }}
+              style={{ background: "linear-gradient(90deg, transparent, rgba(210,228,255,0.80), transparent)" }}
               initial={{ opacity: 0, scaleX: 0 }}
               animate={{ opacity: 1, scaleX: 1 }}
               transition={{ duration: 1.2, delay: 1.0, ease: ease() }}
@@ -321,16 +302,22 @@ export function EndCardOverlay({ visible, cueText, stage = true }: Props) {
               )}
             </AnimatePresence>
 
-            {/* "Thank you" — arrives last, very quiet */}
+            {/* "Thank you" — arrives last */}
             <AnimatePresence>
               {showThanks && (
                 <motion.p
                   key="thanks"
                   className={`font-serif tracking-widest uppercase ${
-                    stage ? "text-sm md:text-base" : "text-xs md:text-sm"
+                    stage ? "text-xl md:text-2xl" : "text-base md:text-lg"
                   }`}
-                  style={{ color: "rgba(200,218,248,0.45)", letterSpacing: "0.28em" }}
-                  initial={{ opacity: 0, y: 10 }}
+                  style={{
+                    color: "rgba(225,238,255,0.95)",
+                    letterSpacing: "0.32em",
+                    textShadow: stage
+                      ? "0 0 28px rgba(200,220,255,0.55), 0 0 60px rgba(180,200,255,0.22), 0 3px 14px rgba(0,0,0,0.90)"
+                      : "0 0 18px rgba(200,220,255,0.40), 0 3px 10px rgba(0,0,0,0.85)",
+                  }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: stage ? 1.8 : 1.2, ease: ease() }}

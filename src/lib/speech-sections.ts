@@ -585,7 +585,7 @@ export const speechSections: SpeechSection[] = [
     title: "33. Reunion",
     speakerText:
       "So, Class of '26, we are about to embark on the next chapters of our lives, becoming doctors, business majors, football players, and other incredible people.\n\nYears from now, the leaves on that tree may look completely different.\n\nYour dreams may change.\nYour friends may change.\nYour sleep schedule will hopefully change.\n\nAnd whether we are ready or not, that journey is about to begin.\n\nSo all I can ask is that maybe in 10 or 15 years, we reunite, look back at those leaves, and be proud of ourselves.\n\nBe proud of ourselves for actively picking who we want to become.",
-    projectorState: "life_stages",
+    projectorState: "forest_zoom",
     season: "spring",
     audienceState: "captions_visible",
     ceremonyState: "closing",

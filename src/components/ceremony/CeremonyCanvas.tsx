@@ -16,6 +16,7 @@ import { LifeStageBanner, LIFE_STAGES } from "./LifeStageBanner";
 import { ClassmatesBoard } from "./ClassmatesBoard";
 import { LeafPopEffect } from "./LeafPopEffect";
 import { EndCardOverlay } from "./EndCardOverlay";
+import { ForestSpaceOverlay } from "./ForestSpaceOverlay";
 import { CeremonyQR } from "../CeremonyQR";
 
 interface Props {
@@ -96,9 +97,10 @@ export function CeremonyCanvas({
   useEffect(() => { setCycleSeason(season); }, [season]);
 
   // Season cycle — section 30 only (one place, no double cycling)
+  // 5 s between changes gives the audience time to feel each season
   useEffect(() => {
     if (!isSeasonsSection || reduced) return;
-    const id = setInterval(() => setCycleSeason((s) => nextSeason(s)), 2500);
+    const id = setInterval(() => setCycleSeason((s) => nextSeason(s)), 5000);
     return () => clearInterval(id);
   }, [isSeasonsSection, reduced]);
 
@@ -119,7 +121,7 @@ export function CeremonyCanvas({
 
     cancelAnimationFrame(morphRafRef.current);
     const start = performance.now();
-    const duration = 3000;
+    const duration = 4500; // longer morph so the colour wash fully saturates
 
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / duration);
@@ -150,19 +152,22 @@ export function CeremonyCanvas({
 
   const displaySeason = (isSeasonsSection || isLifeStages) ? cycleSeason : season;
 
+  const isForestZoom = state === "forest_zoom";
+
   const canvasMode: CanvasSceneMode = useMemo(() => {
-    if (showQr)       return "cosmos";
-    if (leafPlacing)  return "tree";
-    if (showAsiLeaf)  return "leaf";
+    if (showQr)         return "cosmos";
+    if (leafPlacing)    return "tree";
+    if (showAsiLeaf)    return "leaf";
+    if (isForestZoom)   return "forest";
     if (layer === "tree") return "tree";
     return "cosmos";
-  }, [showQr, leafPlacing, showAsiLeaf, layer]);
+  }, [showQr, leafPlacing, showAsiLeaf, isForestZoom, layer]);
 
   const treeScale = useMemo(() => {
-    if (state === "forest_zoom")  return 0.55;
+    if (state === "forest_zoom")  return 0.34;
     if (state === "life_stages")  return 0.68;
     if (state === "end_card")     return 0.82;
-    return 0.82; // slightly smaller so the full tree fits on screen
+    return 0.82;
   }, [state]);
 
   // Falling leaves only when people have actually responded AND in the right phase
@@ -173,25 +178,59 @@ export function CeremonyCanvas({
 
   const isEndCard = state === "end_card";
 
+  // Re-key the space overlay each time we enter forest mode
+  const forestEntryKeyRef = useRef(0);
+  const prevForestRef     = useRef(false);
+  if (isForestZoom && !prevForestRef.current) {
+    forestEntryKeyRef.current += 1;
+  }
+  prevForestRef.current = isForestZoom;
+
+  // Full-screen season colour wash — applied only during the seasons_cycle section.
+  // Each season gets a subtle tint that transforms the entire page feel.
+  const SEASON_WASH: Record<Season, string> = {
+    winter: "rgba(140, 180, 255, 0.09)",
+    spring: "rgba(140, 230, 160, 0.08)",
+    summer: "rgba(160, 235, 130, 0.09)",
+    autumn: "rgba(255, 165,  80, 0.11)",
+  };
+
   return (
     <div className="relative w-full h-full overflow-hidden bg-[#010205]">
-      <MoonlitCanvasScene
-        mode               = {canvasMode}
-        season             = {displaySeason}
-        sectionId          = {sectionId}
-        veinCount          = {veinCount}
-        zoomT              = {zoomT}
-        audienceLeaves     = {audienceLeaves}
-        newestLeafId       = {newestLeafRef.current}
-        treeScale          = {treeScale}
-        enableFallingLeaves= {enableFallingLeaves}
-        isFinale           = {isEndCard}
-        leafLabel          = {sectionId === "memories_2" ? cueText : undefined}
-        leafPlacing        = {leafPlacing}
-        seasonMorphPulse   = {isSeasonsSection ? seasonMorphPulse : 0}
-        stage              = {stage}
-        reduced            = {reduced}
-      />
+      <motion.div
+        className="absolute inset-0"
+        key={isEndCard ? "scene-finale" : "scene"}
+        initial={isEndCard ? { scale: 0.32, opacity: 0 } : false}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={isEndCard ? { duration: 2.6, ease: [0.14, 1, 0.34, 1] } : { duration: 0 }}
+        style={{ transformOrigin: "50% 72%" }}
+      >
+        <MoonlitCanvasScene
+          mode               = {canvasMode}
+          season             = {displaySeason}
+          sectionId          = {sectionId}
+          veinCount          = {veinCount}
+          zoomT              = {zoomT}
+          audienceLeaves     = {audienceLeaves}
+          newestLeafId       = {newestLeafRef.current}
+          treeScale          = {treeScale}
+          enableFallingLeaves= {enableFallingLeaves}
+          isFinale           = {isEndCard}
+          leafLabel          = {sectionId === "memories_2" ? cueText : undefined}
+          leafPlacing        = {leafPlacing}
+          seasonMorphPulse   = {isSeasonsSection ? seasonMorphPulse : 0}
+          stage              = {stage}
+          reduced            = {reduced}
+        />
+      </motion.div>
+
+      {/* Full-page seasonal colour wash — only during seasons section */}
+      {isSeasonsSection && (
+        <div
+          className="absolute inset-0 pointer-events-none z-[1] transition-[background-color] duration-[2400ms] ease-in-out"
+          style={{ backgroundColor: SEASON_WASH[displaySeason] }}
+        />
+      )}
 
       <LeafPopEffect trigger={layer === "tree" ? leafPulseAt : 0} stage={stage} />
 
@@ -214,6 +253,13 @@ export function CeremonyCanvas({
         stage={stage}
       />
 
+      <ForestSpaceOverlay
+        visible={isForestZoom}
+        cueText={cueText}
+        stage={stage}
+        entryKey={forestEntryKeyRef.current}
+      />
+
       <AnimatePresence mode="wait">
         {showQr && (
           <motion.div
@@ -233,8 +279,9 @@ export function CeremonyCanvas({
         )}
       </AnimatePresence>
 
+      {/* Normal bottom cue — shown for all other tree states */}
       <AnimatePresence mode="wait">
-        {cueText && !showQr && !isLifeStages && !isClassmatesRoll && state !== "end_card" && layer === "tree" && (
+        {cueText && !showQr && !isLifeStages && !isClassmatesRoll && !isForestZoom && state !== "end_card" && layer === "tree" && (
           <motion.div
             key={cueText}
             className="absolute bottom-[8%] left-0 right-0 px-8 z-10 pointer-events-none"
@@ -245,8 +292,8 @@ export function CeremonyCanvas({
           >
             <p className={`font-serif text-center tracking-wide mx-auto max-w-4xl drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] ${
               stage
-                ? "text-3xl md:text-5xl lg:text-6xl text-white font-medium"
-                : "text-2xl md:text-3xl text-white/95"
+                ? "text-4xl md:text-6xl lg:text-7xl text-white font-medium"
+                : "text-3xl md:text-4xl text-white/95"
             }`}>
               {cueText}
             </p>
@@ -254,7 +301,7 @@ export function CeremonyCanvas({
               <p className={`font-sans text-center mt-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] ${
                 stage ? "text-sm md:text-base" : "text-xs md:text-sm"
               }`} style={{ color: "rgba(200,218,248,0.55)" }}>
-                {leafCount} {leafCount === 1 ? "person answered" : "people answered"}
+                {leafCount} {leafCount === 1 ? "purpose on this tree" : "purposes on this tree"}
               </p>
             )}
           </motion.div>

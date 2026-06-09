@@ -188,6 +188,8 @@ export interface UserSession {
   sessionId: string;
   deviceType: "audience" | "speaker" | "projector";
   languageCode?: LanguageCode;
+  /** Last section the audience device was synced to */
+  currentSectionId?: string;
   connectedAt: string;
   lastSeenAt: string;
 }

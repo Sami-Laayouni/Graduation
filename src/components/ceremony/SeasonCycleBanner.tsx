@@ -38,7 +38,7 @@ export function SeasonCycleBanner({ season, stage = true }: Props) {
         transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
       >
         <div
-          className="flex flex-col items-center text-center rounded-lg px-4 py-2 border border-white/12 backdrop-blur-sm"
+          className="flex flex-col items-center text-center rounded-xl px-6 py-3 border border-white/14 backdrop-blur-sm"
           style={{
             background: "rgba(0, 0, 0, 0.55)",
             boxShadow: `0 2px 16px rgba(0,0,0,0.4), 0 0 24px -8px ${p.veinGlow}33`,
@@ -46,15 +46,15 @@ export function SeasonCycleBanner({ season, stage = true }: Props) {
         >
           <p
             className={`font-serif uppercase tracking-[0.22em] text-white/90 ${
-              stage ? "text-sm md:text-base" : "text-xs md:text-sm"
+              stage ? "text-base md:text-lg" : "text-sm md:text-base"
             }`}
             style={{ textShadow: `0 0 12px ${p.veinGlow}44` }}
           >
             {labels[season]}
           </p>
           <motion.p
-            className={`font-serif italic text-white/60 ${
-              stage ? "text-xs md:text-sm" : "text-[11px] md:text-xs"
+            className={`font-serif italic text-white/60 mt-0.5 ${
+              stage ? "text-sm md:text-base" : "text-xs md:text-sm"
             }`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

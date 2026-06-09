@@ -25,7 +25,8 @@ async function safeFetch(url: string, init?: RequestInit) {
 export function usePresence(
   sessionId: string,
   deviceType: "audience" | "speaker" | "projector",
-  languageCode?: LanguageCode
+  languageCode?: LanguageCode,
+  currentSectionId?: string,
 ) {
   const userIdRef = useRef<string | null>(null);
 
@@ -41,6 +42,7 @@ export function usePresence(
           userSessionId: existing,
           deviceType,
           languageCode,
+          currentSectionId,
         }),
       });
       if (!res?.ok || cancelled) return;
@@ -57,15 +59,27 @@ export function usePresence(
       await safeFetch(`/api/session/${sessionId}/presence`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userSessionId: uid }),
+        body: JSON.stringify({ userSessionId: uid, currentSectionId }),
       });
-    }, 25000);
+    }, 12_000);
 
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [sessionId, deviceType, languageCode]);
+  }, [sessionId, deviceType, languageCode, currentSectionId]);
+
+  // Push section changes immediately so the speaker sees who's caught up
+  useEffect(() => {
+    if (deviceType !== "audience" || !currentSectionId) return;
+    const uid = userIdRef.current ?? getStoredUserSessionId();
+    if (!uid) return;
+    void safeFetch(`/api/session/${sessionId}/presence`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userSessionId: uid, currentSectionId }),
+    });
+  }, [sessionId, deviceType, currentSectionId]);
 
   return {
     getUserSessionId: () =>

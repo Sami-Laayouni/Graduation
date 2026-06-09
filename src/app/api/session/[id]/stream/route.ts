@@ -49,9 +49,9 @@ export async function GET(
         return;
       }
 
-      // Production (Redis): poll every 4 s and push only when state changed.
+      // Production (Redis): poll every 2 s and push only when state changed.
       // A lightweight timestamp read is used first; full state is fetched only on change.
-      const POLL_MS = 4_000;
+      const POLL_MS = 750;
       const poll = async () => {
         if (!ctx.active) return;
         try {

@@ -32,6 +32,7 @@ export async function POST(
     userSessionId?: string;
     deviceType: "audience" | "speaker" | "projector";
     languageCode?: LanguageCode;
+    currentSectionId?: string;
   };
   try {
     body = await request.json();
@@ -47,6 +48,7 @@ export async function POST(
     sessionId: id,
     deviceType: body.deviceType,
     languageCode: body.languageCode,
+    currentSectionId: body.currentSectionId,
     connectedAt: now,
     lastSeenAt: now,
   });
@@ -63,12 +65,14 @@ export async function PATCH(
 ) {
   const { id } = await params;
   let userSessionId: string | undefined;
+  let currentSectionId: string | undefined;
   try {
     const body = await request.json();
     userSessionId = body?.userSessionId;
+    currentSectionId = body?.currentSectionId;
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
-  if (userSessionId) await touchUserSession(id, userSessionId);
+  if (userSessionId) await touchUserSession(id, userSessionId, currentSectionId);
   return NextResponse.json(await getConnectedCounts(id));
 }

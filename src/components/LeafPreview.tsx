@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import type { LeafDNA } from "@/lib/types";
+import { leafHsla, leafVisualFromDna } from "@/lib/leaf-visual";
 
 interface Props {
   dna: LeafDNA;
@@ -12,11 +13,9 @@ interface Props {
 export function LeafPreview({ dna, size: SIZE = 88, animate = true }: Props) {
   const cx = SIZE / 2;
   const cy = SIZE / 2;
-  const scale = SIZE / 88;
-  const rx = (18 + dna.rxMul * 16) * dna.scale * scale;
-  const ry = (11 + dna.ryMul * 11) * dna.scale * scale;
-  const bv = Math.round(Math.min(240, Math.max(150, (0.75 + dna.brightOffset) * 235)));
-  const col = `rgb(${bv},${bv},${bv})`;
+  const vis = leafVisualFromDna(dna, SIZE / 88);
+  const { rx, ry } = vis;
+  const col = leafHsla(vis);
 
   const leafD = `
     M ${cx} ${cy + ry}
@@ -34,7 +33,7 @@ export function LeafPreview({ dna, size: SIZE = 88, animate = true }: Props) {
       width={SIZE}
       height={SIZE}
       viewBox={`0 0 ${SIZE} ${SIZE}`}
-      style={{ filter: `drop-shadow(0 0 16px rgba(${bv},${bv},${bv},0.55))` }}
+      style={{ filter: `drop-shadow(0 0 16px ${leafHsla(vis, 0.55)})` }}
       aria-hidden
     >
       <defs>

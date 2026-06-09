@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import clsx from "clsx";
-import type { ProjectorMode, SessionContent, SyncEventType } from "@/lib/types";
+import type { SessionContent, SyncEventType } from "@/lib/types";
 import { SyncIndicator } from "./SyncIndicator";
 import { useLiveSession } from "@/hooks/useLiveSession";
 import { usePresence } from "@/hooks/usePresence";
@@ -17,8 +17,8 @@ interface Props {
 }
 
 export function SpeakerDashboard({ session }: Props) {
-  const { liveState, connected, error } = useLiveSession(session.id);
-  const [counts, setCounts] = useState({ audience: 0, total: 0 });
+  const { liveState, connected, error, refresh } = useLiveSession(session.id);
+  const [counts, setCounts] = useState({ audience: 0, total: 0, samePage: 0 });
   const [busy, setBusy] = useState(false);
   usePresence(session.id, "speaker");
 
@@ -28,7 +28,7 @@ export function SpeakerDashboard({ session }: Props) {
         const res = await fetch(`/api/session/${session.id}/presence`, { cache: "no-store" });
         if (res.ok) setCounts(await res.json());
       } catch { /* ignore */ }
-    }, 5000);
+    }, 1500);
     return () => clearInterval(interval);
   }, [session.id]);
 
@@ -41,20 +41,17 @@ export function SpeakerDashboard({ session }: Props) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type, payload }),
         });
+        void refresh();
       } finally {
         setBusy(false);
       }
     },
-    [session.id]
+    [session.id, refresh]
   );
-
-  const setMode = (m: ProjectorMode) =>
-    emit("SET_PROJECTOR_MODE", { projectorMode: m });
 
   const currentIdx = session.sections.findIndex(s => s.id === liveState?.currentSectionId);
   const current    = session.sections[currentIdx];
   const total      = session.sections.length;
-  const projMode   = liveState?.projectorMode ?? "stage";
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -76,97 +73,6 @@ export function SpeakerDashboard({ session }: Props) {
   return (
     <div className="min-h-dvh bg-ceremony-bg text-ceremony-text p-4 md:p-8">
 
-      {/* ── Mode selector ──────────────────────────────────────────────── */}
-      <div className="mb-6 rounded-2xl border overflow-hidden"
-        style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-
-        <div className="px-5 py-3 border-b text-xs uppercase tracking-[0.25em]"
-          style={{ borderColor: "rgba(255,255,255,0.06)", color: "rgba(200,216,240,0.4)" }}>
-          Venue setup
-        </div>
-
-        <div className="grid grid-cols-2"
-          style={{ borderRight: "none" }}>
-
-          {/* Stage mode */}
-          <button
-            type="button"
-            onClick={() => setMode("stage")}
-            style={{ borderRight: "1px solid rgba(255,255,255,0.06)" }}
-            className={clsx(
-              "relative flex flex-col items-start gap-2 px-5 py-5 text-left transition-colors",
-              projMode === "stage"
-                ? "bg-white/[0.06]"
-                : "hover:bg-white/[0.02]"
-            )}
-          >
-            {projMode === "stage" && (
-              <span className="absolute top-4 right-4 text-[10px] tracking-[0.2em] uppercase px-2 py-0.5 rounded-full"
-                style={{ background: "rgba(200,216,240,0.12)", color: "rgba(200,216,240,0.7)" }}>
-                Active
-              </span>
-            )}
-            <div className="flex items-center gap-3">
-              {/* Projector icon */}
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                stroke={projMode === "stage" ? "rgba(220,230,250,0.9)" : "rgba(200,216,240,0.4)"}
-                strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="6" width="20" height="12" rx="2"/>
-                <circle cx="12" cy="12" r="3"/>
-                <line x1="12" y1="18" x2="12" y2="22"/>
-                <line x1="8"  y1="22" x2="16" y2="22"/>
-              </svg>
-              <span className="font-serif text-lg"
-                style={{ color: projMode === "stage" ? "#e8ecf4" : "rgba(200,216,240,0.5)" }}>
-                Stage Mode
-              </span>
-            </div>
-            <p className="text-xs leading-relaxed pl-[34px]"
-              style={{ color: "rgba(200,216,240,0.38)" }}>
-              Projector present. Tree on the big screen.<br/>
-              High-contrast, readable from far away.
-            </p>
-          </button>
-
-          {/* Personal mode */}
-          <button
-            type="button"
-            onClick={() => setMode("personal")}
-            className={clsx(
-              "relative flex flex-col items-start gap-2 px-5 py-5 text-left transition-colors",
-              projMode === "personal"
-                ? "bg-white/[0.06]"
-                : "hover:bg-white/[0.02]"
-            )}
-          >
-            {projMode === "personal" && (
-              <span className="absolute top-4 right-4 text-[10px] tracking-[0.2em] uppercase px-2 py-0.5 rounded-full"
-                style={{ background: "rgba(200,216,240,0.12)", color: "rgba(200,216,240,0.7)" }}>
-                Active
-              </span>
-            )}
-            <div className="flex items-center gap-3">
-              {/* Phone icon */}
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                stroke={projMode === "personal" ? "rgba(220,230,250,0.9)" : "rgba(200,216,240,0.4)"}
-                strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="5" y="2" width="14" height="20" rx="2"/>
-                <circle cx="12" cy="17" r="1"/>
-              </svg>
-              <span className="font-serif text-lg"
-                style={{ color: projMode === "personal" ? "#e8ecf4" : "rgba(200,216,240,0.5)" }}>
-                Personal Mode
-              </span>
-            </div>
-            <p className="text-xs leading-relaxed pl-[34px]"
-              style={{ color: "rgba(200,216,240,0.38)" }}>
-              No projector. Each phone is the experience.<br/>
-              Leaf shown on their screen, not a shared screen.
-            </p>
-          </button>
-        </div>
-      </div>
-
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <header className="flex flex-wrap items-center justify-between gap-4 mb-5">
         <div>
@@ -176,6 +82,20 @@ export function SpeakerDashboard({ session }: Props) {
         <div className="flex items-center gap-6 text-sm">
           <SyncIndicator connected={connected} error={error} />
           <span>{counts.audience} audience</span>
+          {counts.audience > 0 && (
+            <span
+              className={clsx(
+                "rounded-full px-3 py-1 border tabular-nums",
+                counts.samePage >= counts.audience * 0.7
+                  ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-200"
+                  : counts.samePage >= counts.audience * 0.4
+                    ? "border-amber-400/40 bg-amber-400/10 text-amber-200"
+                    : "border-red-400/40 bg-red-400/10 text-red-200",
+              )}
+            >
+              {counts.samePage} on same page
+            </span>
+          )}
         </div>
       </header>
 
@@ -197,6 +117,27 @@ export function SpeakerDashboard({ session }: Props) {
         </a>
         <button
           type="button"
+          disabled={busy}
+          onClick={async () => {
+            if (!confirm("Add 100 demo leaves to the tree? Each gets unique colors and shapes like a real submission.")) return;
+            setBusy(true);
+            try {
+              const res = await fetch(`/api/session/${session.id}/leaves`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ count: 100 }),
+              });
+              if (res.ok) void refresh();
+            } finally {
+              setBusy(false);
+            }
+          }}
+          className="btn-ceremony text-sm"
+        >
+          Add 100 demo leaves
+        </button>
+        <button
+          type="button"
           disabled={busy || (liveState?.leafCount ?? 0) === 0}
           onClick={async () => {
             if (!confirm(`Remove all ${liveState?.leafCount ?? 0} leaves from the tree? This cannot be undone.`)) return;
@@ -215,82 +156,116 @@ export function SpeakerDashboard({ session }: Props) {
 
       <p className="text-xs text-ceremony-muted mb-4">
         Section {currentIdx + 1} of {total}{current ? ` — ${current.title}` : ""}
+        {counts.audience > 0 && counts.samePage < counts.audience && (
+          <span className="ml-2 text-amber-300/80">
+            · {counts.audience - counts.samePage} still catching up — consider waiting a moment
+          </span>
+        )}
       </p>
 
       {/* ── Main grid ──────────────────────────────────────────────────── */}
-      <div className="grid lg:grid-cols-[1fr_2fr_1fr] gap-6">
+      <div className="grid lg:grid-cols-[220px_1fr_180px] gap-5">
 
         {/* Section list */}
-        <aside className="space-y-1 max-h-[60vh] overflow-y-auto">
+        <aside className="space-y-1 max-h-[72vh] overflow-y-auto pr-1">
           {session.sections.map((section, i) => (
             <button key={section.id} type="button" disabled={busy}
               onClick={() => emit("SECTION_JUMP", { sectionId: section.id })}
               className={clsx(
-                "w-full text-left rounded-lg px-3 py-2 text-sm border transition-colors",
+                "w-full text-left rounded-lg px-3 py-2.5 text-sm border transition-colors",
                 liveState?.currentSectionId === section.id
-                  ? "border-ceremony-glow/50 bg-ceremony-glow/10"
-                  : "border-white/5 hover:border-white/15"
+                  ? "border-ceremony-glow/60 bg-ceremony-glow/10 text-white"
+                  : "border-white/5 text-ceremony-dim hover:border-white/20 hover:text-white"
               )}>
-              <span className="text-ceremony-muted mr-2 tabular-nums">{i + 1}.</span>
+              <span className="text-ceremony-muted mr-2 tabular-nums text-xs">{i + 1}.</span>
               {section.title.replace(/^\d+\.\s*/, "")}
             </button>
           ))}
         </aside>
 
-        {/* Current section */}
-        <main className="rounded-2xl border border-white/10 bg-ceremony-surface/40 p-6">
-          <p className="text-xs uppercase tracking-widest text-ceremony-muted mb-2">Current</p>
-          <h2 className="font-serif text-3xl mb-4">{current?.title ?? "—"}</h2>
-          <p className="text-ceremony-dim leading-relaxed text-sm max-h-[min(50vh,400px)] overflow-y-auto whitespace-pre-line">
-            {current?.speakerText}
-          </p>
-          <div className="mt-6 flex flex-wrap gap-2 text-xs text-ceremony-muted items-center">
-            <span>Visual: {liveState?.projectorState}</span>
-            <span>|</span>
-            <span>Leaves: {liveState?.leafCount ?? 0}</span>
-            {asiVeinCount(current?.id ?? "") > 0 && (
-              <>
-                <span>|</span>
-                <span className="text-ceremony-glow">
-                  Line {asiVeinCount(current?.id ?? "")}/{TOTAL_ASI_VEINS}
-                  {leafZoomT(current?.id ?? "") > 0 &&
-                    ` · zoom ${Math.round(leafZoomT(current?.id ?? "") * 100)}%`}
-                </span>
-              </>
-            )}
+        {/* ── Current section — SPEAKER SCRIPT ── */}
+        <main className="rounded-2xl border border-white/10 bg-white/[0.04] flex flex-col overflow-hidden">
+
+          {/* Section header bar */}
+          <div className="flex items-center justify-between px-6 py-3 border-b border-white/[0.07]">
+            <div className="flex items-center gap-3">
+              <span className="text-xs uppercase tracking-[0.2em]"
+                style={{ color: "rgba(200,216,240,0.38)" }}>
+                {currentIdx + 1} / {total}
+              </span>
+              <span className="text-white/80 font-medium">{current?.title ?? "—"}</span>
+            </div>
+            <div className="flex items-center gap-3 text-xs" style={{ color: "rgba(200,216,240,0.38)" }}>
+              <span>{liveState?.projectorState ?? "—"}</span>
+              <span>·</span>
+              <span>{liveState?.leafCount ?? 0} leaves</span>
+            </div>
           </div>
+
+          {/* ★ THE SCRIPT — large, readable, high contrast */}
+          <div className="flex-1 overflow-y-auto px-7 py-6">
+            <p
+              className="whitespace-pre-line leading-[1.85] select-text"
+              style={{
+                fontSize: "clamp(1.15rem, 2.2vw, 1.55rem)",
+                color: "#f0f4ff",
+                fontFamily: "Georgia, 'Times New Roman', serif",
+                letterSpacing: "0.01em",
+              }}
+            >
+              {current?.speakerText ?? "No section selected"}
+            </p>
+          </div>
+
+          {/* Peek: next section */}
+          {session.sections[currentIdx + 1] && (
+            <div className="px-6 py-3 border-t border-white/[0.07]">
+              <p className="text-xs uppercase tracking-[0.15em] mb-1"
+                style={{ color: "rgba(200,216,240,0.30)" }}>
+                Up next
+              </p>
+              <p className="text-sm leading-relaxed"
+                style={{ color: "rgba(200,216,240,0.48)" }}>
+                {session.sections[currentIdx + 1].speakerText?.split("\n")[0]?.slice(0, 110)}
+                {(session.sections[currentIdx + 1].speakerText?.length ?? 0) > 110 ? "…" : ""}
+              </p>
+            </div>
+          )}
         </main>
 
         {/* Nav controls */}
-        <aside className="flex flex-col gap-3">
+        <aside className="flex flex-col gap-2.5">
           <button type="button" disabled={busy || currentIdx <= 0}
             onClick={() => emit("SECTION_PREVIOUS")}
-            className="btn-ceremony w-full text-lg py-4">
-            ← Previous
+            className="btn-ceremony w-full text-base py-4">
+            ← Prev
           </button>
           <button type="button" disabled={busy || currentIdx >= total - 1}
             onClick={() => emit("SECTION_NEXT")}
-            className="btn-ceremony-primary w-full text-lg py-4">
+            className="btn-ceremony-primary w-full text-base py-4">
             Next →
           </button>
+
+          <div className="h-px my-1" style={{ background: "rgba(255,255,255,0.06)" }} />
+
           <button type="button" disabled={busy}
             onClick={() => emit("SHOW_REFLECTION")}
-            className="btn-ceremony w-full">
-            Reflection moment
+            className="btn-ceremony w-full text-sm">
+            Reflection
           </button>
           <button type="button" disabled={busy}
             onClick={() => emit("HIDE_REFLECTION")}
-            className="btn-ceremony w-full">
+            className="btn-ceremony w-full text-sm">
             Release audience
           </button>
           <button type="button" disabled={busy}
             onClick={() => emit("END_SESSION")}
-            className="btn-ceremony w-full">
+            className="btn-ceremony w-full text-sm">
             End session
           </button>
           <button type="button" disabled={busy}
             onClick={() => { if (confirm("Reset entire session to start?")) emit("RESET_SESSION"); }}
-            className="btn-ceremony w-full border-red-400/30 text-red-300/80">
+            className="btn-ceremony w-full text-sm border-red-400/30 text-red-300/70">
             Emergency reset
           </button>
         </aside>

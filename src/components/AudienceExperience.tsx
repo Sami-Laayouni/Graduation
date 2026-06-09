@@ -35,7 +35,7 @@ export function AudienceExperience({ session }: Props) {
   } = useAudienceStore();
 
   const { liveState, connected, error } = useLiveSession(session.id);
-  usePresence(session.id, "audience", language);
+  usePresence(session.id, "audience", language, liveState?.currentSectionId);
 
   const [highContrast, setHighContrast] = useState(false);
   const [largeText,    setLargeText]    = useState(false);
@@ -69,9 +69,12 @@ export function AudienceExperience({ session }: Props) {
     return trans?.captionText ?? "";
   }, [trans, liveState?.mode, t.sessionEnded, language]);
 
-  const submitOne = useCallback(async (promptId: string) => {
+  // submitOne returns the LeafDNA on success so handleSubmit can batch all
+  // state updates (DNA + showThanks) into the same synchronous block, which
+  // guarantees React renders the card with the leaf already present.
+  const submitOne = useCallback(async (promptId: string): Promise<LeafDNA | null> => {
     const text = reflectionAnswers[promptId];
-    if (!text?.trim()) return;
+    if (!text?.trim()) return null;
     setSubmitting(true);
     const uid = getStoredUserSessionId();
     try {
@@ -85,13 +88,14 @@ export function AudienceExperience({ session }: Props) {
           languageCode: language,
         }),
       });
-      if (res.ok) {
-        const data = await res.json() as { dna?: LeafDNA };
-        if (data.dna) setMyLeafDNA(data.dna);
-      }
       playLeafChime();
       setShowBurst(true);
       setTimeout(() => setShowBurst(false), 2200);
+      if (res.ok) {
+        const data = await res.json() as { dna?: LeafDNA };
+        return data.dna ?? null;
+      }
+      return null;
     } finally {
       setSubmitting(false);
     }
@@ -99,12 +103,31 @@ export function AudienceExperience({ session }: Props) {
 
   const handleSubmit = useCallback(async (promptId: string) => {
     const isLast = reflectionStep >= session.reflectionPrompts.length - 1;
-    await submitOne(promptId);
+    const dna = await submitOne(promptId);
     if (isLast) {
+      // Set DNA and showThanks synchronously so they land in the same render —
+      // the LeafSavedCard will always mount with the leaf already populated.
+      if (dna) setMyLeafDNA(dna);
       markSubmitted();
       setShowThanks(true);
     }
   }, [reflectionStep, session.reflectionPrompts.length, submitOne, markSubmitted]);
+
+  // Fallback: if the card is visible but DNA is still missing (e.g. a network
+  // hiccup on submit, or the user refreshed mid-session), fetch it from the server.
+  useEffect(() => {
+    if (!showThanks || myLeafDNA) return;
+    const uid = getStoredUserSessionId();
+    if (!uid) return;
+    fetch(`/api/session/${session.id}/response?userSessionId=${encodeURIComponent(uid)}`, {
+      cache: "no-store",
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { leaf?: LeafDNA } | null) => {
+        if (data?.leaf) setMyLeafDNA(data.leaf);
+      })
+      .catch(() => {/* ignore */});
+  }, [showThanks, myLeafDNA, session.id]);
 
   // Once the speech advances past the reflection section, go back to normal captions
   useEffect(() => {
@@ -137,15 +160,15 @@ export function AudienceExperience({ session }: Props) {
       </div>
 
       {/* Header */}
-      <header className="relative z-10 flex items-center justify-between px-5 py-4"
+      <header className="relative z-10 flex items-center justify-between px-4 py-3"
         style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
         <div className="flex items-center gap-2">
           <div style={{ opacity: 0.6 }}>{LEAF_SVG}</div>
-          <span className="text-xs tracking-[0.2em] uppercase" style={{ color: "rgba(200,216,240,0.45)" }}>
+          <span className="text-[11px] tracking-[0.18em] uppercase" style={{ color: "rgba(200,216,240,0.45)" }}>
             Class of 2026
           </span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {!isLanguageBoot && (
             <LanguageSelector value={language} onChange={setLanguage} compact />
           )}
@@ -154,7 +177,7 @@ export function AudienceExperience({ session }: Props) {
       </header>
 
       {/* Main */}
-      <main className="relative z-10 flex-1 flex flex-col justify-start md:justify-center py-6 px-5 gap-6 overflow-y-auto">
+      <main className="relative z-10 flex-1 flex flex-col justify-center py-4 px-3 gap-4 overflow-y-auto">
         <AnimatePresence mode="wait">
           {showReflection ? (
             <motion.div
@@ -256,8 +279,8 @@ export function AudienceExperience({ session }: Props) {
                 fairy
               />
               <p
-                className="text-center text-xs tracking-wide"
-                style={{ color: "rgba(200,216,240,0.28)" }}
+                className="text-center text-[11px] tracking-wide leading-relaxed px-4"
+                style={{ color: "rgba(200,216,240,0.32)" }}
                 dir={language === "ar" ? "rtl" : "ltr"}
               >
                 {t.lookUpReminder}
@@ -268,25 +291,30 @@ export function AudienceExperience({ session }: Props) {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 px-5 py-5 space-y-4"
+      <footer className="relative z-10 px-4 py-3 space-y-3"
         style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        {/* Progress dots */}
-        <div className="flex justify-center gap-1">
-          {session.sections.map((_, i) => (
-            <div
-              key={i}
-              className="rounded-full transition-all duration-500"
-              style={{
-                width:      i === sectionIdx ? 14 : 4,
-                height:     4,
-                background: i === sectionIdx
-                  ? "rgba(200,216,240,0.7)"
-                  : i < sectionIdx
-                    ? "rgba(200,216,240,0.25)"
-                    : "rgba(255,255,255,0.08)",
-              }}
-            />
-          ))}
+        {/* Progress — show only a window of dots around the current section */}
+        <div className="flex justify-center gap-[3px] overflow-hidden">
+          {session.sections.map((_, i) => {
+            const dist = Math.abs(i - sectionIdx);
+            if (dist > 8) return null;
+            return (
+              <div
+                key={i}
+                className="rounded-full transition-all duration-500 flex-shrink-0"
+                style={{
+                  width:      i === sectionIdx ? 16 : 4,
+                  height:     4,
+                  opacity:    dist === 0 ? 1 : Math.max(0.12, 0.7 - dist * 0.09),
+                  background: i === sectionIdx
+                    ? "rgba(200,216,240,0.80)"
+                    : i < sectionIdx
+                      ? "rgba(200,216,240,0.32)"
+                      : "rgba(255,255,255,0.10)",
+                }}
+              />
+            );
+          })}
         </div>
 
         {/* Accessibility toggles */}
