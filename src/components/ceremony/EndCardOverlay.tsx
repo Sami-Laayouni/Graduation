@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Props {
   visible: boolean;
@@ -45,62 +45,88 @@ function Shimmer({ stage }: { stage: boolean }) {
   );
 }
 
-/** Renders a word with a ✦ star anchored above the dot of its "i" */
+/**
+ * Highlighted word with a ✦ star precisely over the dot of the "i".
+ *
+ * We measure the actual pixel position of the "i" character after mount
+ * using getBoundingClientRect — the only way to get the right spot in a
+ * proportional serif font where "m" is 3× wider than "i".
+ *
+ * The star animates in after a delay so the brief initial position (50%)
+ * is never visible.
+ */
 function StarWord({ word, stage, delay }: { word: string; stage: boolean; delay: number }) {
+  const containerRef = useRef<HTMLSpanElement>(null);
+  const iCharRef     = useRef<HTMLSpanElement>(null);
+  const [starLeft, setStarLeft] = useState<number | null>(null);
+
   const iIdx = word.toLowerCase().indexOf("i");
 
-  const starSpan = (
-    <motion.span
-      className="absolute left-1/2 -translate-x-1/2 select-none pointer-events-none"
-      style={{
-        top: stage ? "-1.15em" : "-1.05em",
-        fontSize: stage ? "0.52em" : "0.48em",
-        color: "#ffe98a",
-        textShadow: "0 0 10px rgba(255,220,80,0.95), 0 0 22px rgba(255,200,60,0.55)",
-        lineHeight: 1,
-      }}
-      initial={{ opacity: 0, y: 5, scale: 0.3 }}
-      animate={{ opacity: [0, 1, 0.88, 1], y: [5, 0, 0, 0], scale: [0.3, 1.2, 0.95, 1.05] }}
-      transition={{ duration: 1.0, delay, times: [0, 0.35, 0.65, 1], ease: ease() }}
-    >
-      ✦
-    </motion.span>
-  );
+  useEffect(() => {
+    function measure() {
+      if (!containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
 
-  const wordStyle: React.CSSProperties = {
-    color: "#ffffff",
-    textShadow: "0 0 20px rgba(255,230,120,0.50), 0 0 8px rgba(255,255,255,0.35)",
-    fontStyle: "normal",
-  };
+      if (iCharRef.current) {
+        const iRect = iCharRef.current.getBoundingClientRect();
+        setStarLeft(iRect.left - containerRect.left + iRect.width / 2);
+      } else {
+        // No "i" — centre over the whole word
+        setStarLeft(containerRect.width / 2);
+      }
+    }
 
-  if (iIdx === -1) {
-    return (
-      <motion.span
-        className="relative inline-block"
-        style={wordStyle}
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay }}
-      >
-        {starSpan}{word}
-      </motion.span>
-    );
-  }
+    measure();
 
-  const before = word.slice(0, iIdx);
-  const iChar  = word[iIdx];
-  const after  = word.slice(iIdx + 1);
+    // Re-measure if the window resizes (font size / layout changes)
+    const ro = new ResizeObserver(measure);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [word]);
+
+  const wordContent = iIdx >= 0 ? (
+    <>
+      {word.slice(0, iIdx)}
+      <span ref={iCharRef}>{word[iIdx]}</span>
+      {word.slice(iIdx + 1)}
+    </>
+  ) : word;
 
   return (
     <motion.span
-      className="inline"
-      style={wordStyle}
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay }}
+      ref={containerRef}
+      className="relative inline-block"
+      style={{
+        fontStyle: "normal",
+        color: "#ffffff",
+        textShadow: "0 0 18px rgba(255,230,120,0.45), 0 0 6px rgba(255,255,255,0.28)",
+      }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5, delay }}
     >
-      {before}
-      <span className="relative inline-block">
-        {starSpan}
-        {iChar}
-      </span>
-      {after}
+      {/* Star renders only once measured so it never flashes at wrong position */}
+      {starLeft !== null && (
+        <motion.span
+          className="absolute select-none pointer-events-none"
+          style={{
+            left: starLeft,
+            top: stage ? "-0.80em" : "-0.72em",
+            transform: "translateX(-50%)",
+            fontSize: stage ? "0.50em" : "0.44em",
+            lineHeight: 1,
+            fontStyle: "normal",
+            color: "#ffe98a",
+            textShadow: "0 0 10px rgba(255,220,80,0.95), 0 0 20px rgba(255,200,60,0.55)",
+          }}
+          initial={{ opacity: 0, y: 5, scale: 0.3 }}
+          animate={{ opacity: [0, 1, 0.88, 1], y: [5, 0, 0, 0], scale: [0.3, 1.2, 0.95, 1.05] }}
+          transition={{ duration: 0.9, delay: delay + 0.1, times: [0, 0.35, 0.65, 1], ease: ease() }}
+        >
+          ✦
+        </motion.span>
+      )}
+      {wordContent}
     </motion.span>
   );
 }
@@ -116,25 +142,24 @@ function HighlightedQuote({
   baseDelay: number;
 }) {
   const HIGHLIGHT = ["main", "life"];
-  // Strip leading/trailing quotes if already present
   const clean = text.replace(/^["""]+|["""]+$/g, "").trim();
   const words = clean.split(/\s+/);
 
   return (
-    <span>
+    <>
       {words.map((raw, i) => {
-        const stripped = raw.replace(/[.,!?;:"""]+$/, "");
-        const punctuation = raw.slice(stripped.length);
-        const isHighlight = HIGHLIGHT.includes(stripped.toLowerCase());
-        const wordDelay = baseDelay + i * 0.055;
+        const stripped     = raw.replace(/[.,!?;:"""]+$/, "");
+        const punctuation  = raw.slice(stripped.length);
+        const isHighlight  = HIGHLIGHT.includes(stripped.toLowerCase());
+        const wordDelay    = baseDelay + i * 0.055;
 
         if (isHighlight) {
           return (
-            <span key={i}>
+            <span key={i} className="inline">
               <StarWord word={stripped} stage={stage} delay={wordDelay} />
               {punctuation && (
                 <motion.span
-                  style={{ color: "rgba(220,232,252,0.70)" }}
+                  style={{ color: "rgba(220,232,252,0.70)", fontStyle: "italic" }}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3, delay: wordDelay + 0.15 }}
@@ -149,6 +174,7 @@ function HighlightedQuote({
         return (
           <motion.span
             key={i}
+            className="inline"
             initial={{ opacity: 0, filter: "blur(4px)" }}
             animate={{ opacity: 1, filter: "blur(0px)" }}
             transition={{ duration: 0.5, delay: wordDelay, ease: ease() }}
@@ -158,7 +184,7 @@ function HighlightedQuote({
           </motion.span>
         );
       })}
-    </span>
+    </>
   );
 }
 
@@ -203,7 +229,7 @@ export function EndCardOverlay({ visible, cueText, stage = true }: Props) {
           <Shimmer stage={stage} />
 
           {/* Main content */}
-          <div className="relative flex flex-col items-center gap-5 px-8 text-center">
+          <div className="relative flex flex-col items-center gap-5 px-8 text-center w-full max-w-4xl mx-auto">
 
             {/* "Class of 2026" header */}
             <motion.div
@@ -254,17 +280,21 @@ export function EndCardOverlay({ visible, cueText, stage = true }: Props) {
               transition={{ duration: 1.2, delay: 1.0, ease: ease() }}
             />
 
-            {/* Highlighted quote — word-by-word with stars on "main" and "life" */}
+            {/* Highlighted quote with stars on "main" and "life" */}
             <AnimatePresence>
               {showQuote && cueText && (
-                <motion.p
+                <motion.div
                   key="quote"
-                  className={`font-serif italic leading-relaxed max-w-2xl ${
+                  className={`font-serif italic text-center w-full ${
                     stage
                       ? "text-2xl md:text-3xl lg:text-[2.1rem]"
                       : "text-base md:text-xl"
                   }`}
-                  style={{ textShadow: "0 3px 24px rgba(0,0,0,0.85)" }}
+                  style={{
+                    textShadow: "0 3px 24px rgba(0,0,0,0.85)",
+                    lineHeight: 2.4,    /* extra height so stars don't clip */
+                    paddingTop: "0.6em", /* breathing room at top */
+                  }}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -287,11 +317,11 @@ export function EndCardOverlay({ visible, cueText, stage = true }: Props) {
                   >
                     &rdquo;
                   </motion.span>
-                </motion.p>
+                </motion.div>
               )}
             </AnimatePresence>
 
-            {/* "Thank you." — arrives last, very quiet */}
+            {/* "Thank you" — arrives last, very quiet */}
             <AnimatePresence>
               {showThanks && (
                 <motion.p

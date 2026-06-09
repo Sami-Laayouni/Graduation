@@ -16,7 +16,6 @@ interface Props {
   sessionId: string;
   myLeafDNA: LeafDNA | null;
   lookUpNudge: boolean;
-  onLeafUpdate: (dna: LeafDNA) => void;
 }
 
 function SectionCard({
@@ -43,7 +42,6 @@ export function LeafSavedCard({
   sessionId,
   myLeafDNA,
   lookUpNudge,
-  onLeafUpdate,
 }: Props) {
   const s = leafSavedStrings[language];
   const isRtl = language === "ar";
@@ -51,9 +49,6 @@ export function LeafSavedCard({
   const [isPublic, setIsPublic] = useState(false);
   const [publicName, setPublicName] = useState("");
   const [publicState, setPublicState] = useState<PublicState>("idle");
-  const [updateText, setUpdateText] = useState("");
-  const [updating, setUpdating] = useState(false);
-  const [updateDone, setUpdateDone] = useState(false);
   const [notifState, setNotifState] = useState<NotifState>("idle");
 
   const getUid = () => getStoredUserSessionId() ?? "";
@@ -71,49 +66,55 @@ export function LeafSavedCard({
     >
       {/* Hero */}
       <div className="flex flex-col items-center text-center gap-4 pt-2">
-        {myLeafDNA && <LeafPreview dna={myLeafDNA} size={100} />}
+        {myLeafDNA && <LeafPreview dna={myLeafDNA} size={88} />}
 
         <div className="space-y-2">
           <span className="inline-block rounded-full px-3 py-1 text-xs font-medium tracking-widest uppercase bg-white/10 border border-white/20 text-white/80">
-            ✓ {s.savedBadge}
+            {s.savedBadge}
           </span>
-          <h1 className="font-serif text-3xl md:text-4xl text-white font-medium leading-tight">
-            {s.savedTitle}
+          <h1 className="font-serif text-2xl md:text-3xl text-white font-medium leading-tight">
+            {s.thankYouTitle}
           </h1>
+          <p className="font-serif text-xl text-white/90">
+            {s.thankYouSub}
+          </p>
+          <p className="text-sm text-white/55 mt-1 leading-relaxed max-w-xs mx-auto">
+            {s.privateNote}
+          </p>
         </div>
       </div>
 
       {/* Look up callout */}
       <div
         className={clsx(
-          "w-full rounded-2xl px-5 py-5 text-center border",
+          "w-full rounded-2xl px-5 py-4 text-center border",
           lookUpNudge
             ? "bg-emerald-500/15 border-emerald-400/35"
             : "bg-white/[0.06] border-white/18",
         )}
       >
         <p className={clsx(
-          "font-serif text-xl md:text-2xl font-medium",
+          "font-serif text-lg md:text-xl font-medium",
           lookUpNudge ? "text-emerald-100" : "text-white",
         )}>
           {lookUpNudge ? s.lookUpTitle : s.waitTitle}
         </p>
-        <p className="mt-2 text-sm md:text-base leading-relaxed text-white/75 max-w-sm mx-auto">
+        <p className="mt-1.5 text-sm leading-relaxed text-white/65 max-w-sm mx-auto">
           {lookUpNudge ? s.lookUpSub : s.waitSub}
         </p>
       </div>
 
       {/* 15-year journey */}
       <SectionCard title={s.journeyTitle}>
-        <ul className="space-y-3 text-base md:text-lg leading-relaxed text-white/90">
+        <ul className="space-y-2.5 text-sm md:text-base leading-relaxed text-white/85">
           {[s.journeyBullet1, s.journeyBullet2, s.journeyBullet3].map((line) => (
             <li key={line} className="flex gap-3 items-start">
-              <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-white/50" aria-hidden />
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-white/40" aria-hidden />
               <span>{line}</span>
             </li>
           ))}
         </ul>
-        <p className="pt-1 text-sm md:text-base italic text-white/60 border-t border-white/10">
+        <p className="pt-1 text-xs md:text-sm italic text-white/50 border-t border-white/10">
           {s.journeyTagline}
         </p>
       </SectionCard>
@@ -135,7 +136,7 @@ export function LeafSavedCard({
           >
             {isPublic && <span className="text-sm font-bold">✓</span>}
           </button>
-          <span className="text-base text-white/90 leading-snug">{s.shareLabel}</span>
+          <span className="text-sm text-white/85 leading-snug">{s.shareLabel}</span>
         </label>
         <AnimatePresence>
           {isPublic && (
@@ -151,7 +152,7 @@ export function LeafSavedCard({
                 placeholder={s.shareNamePlaceholder}
                 value={publicName}
                 onChange={(e) => setPublicName(e.target.value)}
-                className="ceremony-input flex-1 text-base"
+                className="ceremony-input flex-1 text-sm"
               />
               <button
                 type="button"
@@ -174,7 +175,7 @@ export function LeafSavedCard({
                   }
                 }}
                 className={clsx(
-                  "btn-ceremony shrink-0 px-5 py-3 text-base",
+                  "btn-ceremony shrink-0 px-4 py-2.5 text-sm",
                   publicState === "saved" && "border-emerald-400/40 text-emerald-200",
                 )}
               >
@@ -185,55 +186,11 @@ export function LeafSavedCard({
         </AnimatePresence>
       </SectionCard>
 
-      {/* Update leaf */}
-      <SectionCard title={s.updateTitle}>
-        {!updateDone ? (
-          <div className="space-y-3">
-            <textarea
-              rows={3}
-              placeholder={s.updatePlaceholder}
-              value={updateText}
-              onChange={(e) => setUpdateText(e.target.value)}
-              className="ceremony-input text-base min-h-[88px]"
-            />
-            <button
-              type="button"
-              disabled={!updateText.trim() || updating}
-              onClick={async () => {
-                if (!updateText.trim()) return;
-                setUpdating(true);
-                try {
-                  const res = await fetch(`/api/session/${sessionId}/response`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      userSessionId: getUid(),
-                      responseText: updateText,
-                    }),
-                  });
-                  if (res.ok) {
-                    const data = await res.json() as { dna?: LeafDNA };
-                    if (data.dna) onLeafUpdate(data.dna);
-                    setUpdateDone(true);
-                  }
-                } finally {
-                  setUpdating(false);
-                }
-              }}
-              className="btn-ceremony-primary w-full py-3.5 text-base disabled:opacity-40"
-            >
-              {updating ? s.updating : s.updateButton}
-            </button>
-          </div>
-        ) : (
-          <p className="text-center text-base text-emerald-200/90 py-2">
-            ✓ {s.updateDone}
-          </p>
-        )}
-      </SectionCard>
-
       {/* Yearly reminder */}
       <SectionCard title={s.remindTitle}>
+        <p className="text-sm text-white/65 leading-relaxed">
+          {s.remindDescription}
+        </p>
         {notifState === "idle" && (
           <button
             type="button"
@@ -246,22 +203,22 @@ export function LeafSavedCard({
               setNotifState(perm === "granted" ? "granted" : "denied");
               if (perm === "granted") {
                 localStorage.setItem("yearly-reminder-opted-in", new Date().toISOString());
-                new Notification("You're on the tree", {
-                  body: "We'll remind you once a year to revisit your main argument.",
+                new Notification("You are on the tree", {
+                  body: "We will remind you once a year to revisit your main argument.",
                   icon: "/favicon.ico",
                 });
               }
             }}
-            className="btn-ceremony w-full py-3.5 text-base"
+            className="btn-ceremony w-full py-3 text-sm"
           >
             {s.remindButton}
           </button>
         )}
         {notifState === "granted" && (
-          <p className="text-center text-base text-emerald-200/90">✓ {s.remindDone}</p>
+          <p className="text-center text-sm text-emerald-200/90">✓ {s.remindDone}</p>
         )}
         {(notifState === "denied" || notifState === "unsupported") && (
-          <p className="text-center text-sm text-white/55">{s.remindFallback}</p>
+          <p className="text-center text-xs text-white/45">{s.remindFallback}</p>
         )}
       </SectionCard>
     </motion.div>

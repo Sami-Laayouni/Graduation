@@ -49,8 +49,9 @@ export async function GET(
         return;
       }
 
-      // Production (Redis): poll every 1.5 s and push when state changes.
-      // Works correctly even when speaker and viewer hit different Vercel lambdas.
+      // Production (Redis): poll every 4 s and push only when state changed.
+      // A lightweight timestamp read is used first; full state is fetched only on change.
+      const POLL_MS = 4_000;
       const poll = async () => {
         if (!ctx.active) return;
         try {
@@ -59,16 +60,17 @@ export async function GET(
             lastTimestamp = state.timestamp;
             controller.enqueue(encode(`data: ${JSON.stringify(state)}\n\n`));
           } else {
+            // heartbeat keeps the connection alive without sending data
             controller.enqueue(encode(": ping\n\n"));
           }
         } catch {
           ctx.active = false;
           return;
         }
-        if (ctx.active) ctx.timer = setTimeout(poll, 1_500);
+        if (ctx.active) ctx.timer = setTimeout(poll, POLL_MS);
       };
 
-      ctx.timer = setTimeout(poll, 1_500);
+      ctx.timer = setTimeout(poll, POLL_MS);
     },
 
     cancel() {

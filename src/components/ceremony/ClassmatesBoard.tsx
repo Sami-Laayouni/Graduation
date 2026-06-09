@@ -29,6 +29,7 @@ const CLASSMATES = [
   "Rihame Rafiq",
   "Sonia Ruth Sefiane",
   "Najima Zilali",
+  "ChatGPT",
 ];
 
 const DEFAULT_NAME_COLOR = "rgba(218,230,250,0.92)";
@@ -39,21 +40,21 @@ interface NameStyle {
   fontWeight?: number;
 }
 
-/** Special tints for shout-out classmates */
+/** Subtle accent tints for shout-out classmates */
 const NAME_STYLE: Record<string, NameStyle> = {
   "Bilal Nour Elheggach": {
-    color:       "rgba(175, 245, 200, 1)",
-    textShadow:  "0 0 18px rgba(110, 231, 160, 0.55), 0 0 36px rgba(74, 222, 128, 0.28)",
+    color:       "rgba(210, 240, 220, 0.95)",
+    textShadow:  "0 0 14px rgba(110, 231, 160, 0.22)",
     fontWeight:  500,
   },
   "Hiba El Idrissi": {
-    color:       "rgba(255, 232, 150, 1)",
-    textShadow:  "0 0 18px rgba(251, 191, 36, 0.55), 0 0 36px rgba(245, 200, 80, 0.30)",
+    color:       "rgba(245, 235, 210, 0.95)",
+    textShadow:  "0 0 14px rgba(251, 191, 36, 0.20)",
     fontWeight:  500,
   },
   "Mohammed El Idrissi": {
-    color:       "rgba(190, 220, 255, 1)",
-    textShadow:  "0 0 18px rgba(147, 197, 253, 0.55), 0 0 36px rgba(96, 165, 250, 0.32)",
+    color:       "rgba(215, 228, 248, 0.95)",
+    textShadow:  "0 0 14px rgba(147, 197, 253, 0.22)",
     fontWeight:  500,
   },
 };
@@ -77,7 +78,7 @@ export function ClassmatesBoard({ stage = false }: Props) {
       if (!el) return;
       const vh      = window.innerHeight;
       const content = el.offsetHeight;
-      const pxPerSec = stage ? 34 : 30;
+      const pxPerSec = stage ? 62 : 52;
 
       // Start almost in view — header peeks in immediately, names follow fast
       const start = vh - rowPx * 3;

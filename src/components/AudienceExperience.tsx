@@ -103,11 +103,16 @@ export function AudienceExperience({ session }: Props) {
     if (isLast) {
       markSubmitted();
       setShowThanks(true);
-      // In personal mode keep the leaf on screen longer — it IS the experience
-      // Keep the 15-year message + options on screen indefinitely — no auto-dismiss.
-      // The card stays until the ceremony ends or a new reflection round begins.
     }
-  }, [reflectionStep, session.reflectionPrompts.length, submitOne, markSubmitted, isPersonal]);
+  }, [reflectionStep, session.reflectionPrompts.length, submitOne, markSubmitted]);
+
+  // Once the speech advances past the reflection section, go back to normal captions
+  useEffect(() => {
+    if (showThanks && !inReflection) {
+      setShowThanks(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inReflection]);
 
   return (
     <div className={clsx("min-h-dvh flex flex-col fairy-page relative", highContrast && "high-contrast", largeText && "large-text")}>
@@ -224,7 +229,6 @@ export function AudienceExperience({ session }: Props) {
                 sessionId={session.id}
                 myLeafDNA={myLeafDNA}
                 lookUpNudge={!!liveState?.lookUpNudge}
-                onLeafUpdate={setMyLeafDNA}
               />
             )
           ) : isLanguageBoot ? (
@@ -235,15 +239,30 @@ export function AudienceExperience({ session }: Props) {
               hint={captionText}
             />
           ) : (
-            <CaptionDisplay
+            <motion.div
               key={section.id}
-              text={captionText}
-              language={language}
-              lookUpNudge={liveState?.lookUpNudge}
-              lookUpLabel={t.lookUp}
-              large={largeText}
-              fairy
-            />
+              className="flex flex-col gap-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <CaptionDisplay
+                text={captionText}
+                language={language}
+                lookUpNudge={liveState?.lookUpNudge}
+                lookUpLabel={t.lookUp}
+                large={largeText}
+                fairy
+              />
+              <p
+                className="text-center text-xs tracking-wide"
+                style={{ color: "rgba(200,216,240,0.28)" }}
+                dir={language === "ar" ? "rtl" : "ltr"}
+              >
+                {t.lookUpReminder}
+              </p>
+            </motion.div>
           )}
         </AnimatePresence>
       </main>

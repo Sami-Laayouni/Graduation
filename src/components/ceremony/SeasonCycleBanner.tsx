@@ -32,10 +32,10 @@ export function SeasonCycleBanner({ season, stage = true }: Props) {
       <motion.div
         key={season}
         className="absolute top-[2.5%] left-0 right-0 flex justify-center pointer-events-none z-20"
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 4 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        initial={{ opacity: 0, y: -16, scale: 0.88, filter: "blur(8px)" }}
+        animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+        exit={{ opacity: 0, y: 12, scale: 0.92, filter: "blur(6px)" }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
       >
         <div
           className="flex flex-col items-center text-center rounded-lg px-4 py-2 border border-white/12 backdrop-blur-sm"

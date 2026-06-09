@@ -95,10 +95,10 @@ export function CeremonyCanvas({
 
   useEffect(() => { setCycleSeason(season); }, [season]);
 
-  // Season cycle — section 30 only
+  // Season cycle — section 30 only (one place, no double cycling)
   useEffect(() => {
     if (!isSeasonsSection || reduced) return;
-    const id = setInterval(() => setCycleSeason((s) => nextSeason(s)), 4000);
+    const id = setInterval(() => setCycleSeason((s) => nextSeason(s)), 2500);
     return () => clearInterval(id);
   }, [isSeasonsSection, reduced]);
 
@@ -119,7 +119,7 @@ export function CeremonyCanvas({
 
     cancelAnimationFrame(morphRafRef.current);
     const start = performance.now();
-    const duration = 2000;
+    const duration = 3000;
 
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / duration);
@@ -133,7 +133,8 @@ export function CeremonyCanvas({
     return () => cancelAnimationFrame(morphRafRef.current);
   }, [cycleSeason, isSeasonsSection]);
 
-  // Life-stage cycle — reset to stage 0 when entering, advance every 5s
+  // Life-stage cycle — advance every 5s, but DO NOT change the tree season
+  // (seasons only cycle during the dedicated seasons_cycle section)
   useEffect(() => {
     if (!isLifeStages) { setStageIdx(0); return; }
     setStageIdx(0);
@@ -147,11 +148,6 @@ export function CeremonyCanvas({
     return () => clearInterval(id);
   }, [isLifeStages]);
 
-  // Keep canvas season in sync with the active life stage
-  useEffect(() => {
-    if (isLifeStages) setCycleSeason(LIFE_STAGES[stageIdx].season);
-  }, [isLifeStages, stageIdx]);
-
   const displaySeason = (isSeasonsSection || isLifeStages) ? cycleSeason : season;
 
   const canvasMode: CanvasSceneMode = useMemo(() => {
@@ -163,10 +159,10 @@ export function CeremonyCanvas({
   }, [showQr, leafPlacing, showAsiLeaf, layer]);
 
   const treeScale = useMemo(() => {
-    if (state === "forest_zoom")  return 0.6;
-    if (state === "life_stages")  return 0.72;
-    if (state === "end_card")     return 0.88;
-    return 1;
+    if (state === "forest_zoom")  return 0.55;
+    if (state === "life_stages")  return 0.68;
+    if (state === "end_card")     return 0.82;
+    return 0.82; // slightly smaller so the full tree fits on screen
   }, [state]);
 
   // Falling leaves only when people have actually responded AND in the right phase
@@ -247,7 +243,6 @@ export function CeremonyCanvas({
             exit={{ opacity: 0 }}
             transition={{ duration: stageDuration(stage, 1.4), ease: ease() }}
           >
-            {/* Stage: larger cue text, full white — readable across a room */}
             <p className={`font-serif text-center tracking-wide mx-auto max-w-4xl drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] ${
               stage
                 ? "text-3xl md:text-5xl lg:text-6xl text-white font-medium"
@@ -255,6 +250,13 @@ export function CeremonyCanvas({
             }`}>
               {cueText}
             </p>
+            {leafCount > 0 && (
+              <p className={`font-sans text-center mt-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] ${
+                stage ? "text-sm md:text-base" : "text-xs md:text-sm"
+              }`} style={{ color: "rgba(200,218,248,0.55)" }}>
+                {leafCount} {leafCount === 1 ? "person answered" : "people answered"}
+              </p>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
