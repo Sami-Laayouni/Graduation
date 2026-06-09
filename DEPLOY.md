@@ -33,7 +33,6 @@ In your Vercel project → **Settings → Environment Variables**, add:
 
 | Variable | Value |
 |---|---|
-| `SPEAKER_SECRET` | A strong random secret (e.g. `openssl rand -hex 32`) |
 | `NEXT_PUBLIC_APP_URL` | `https://your-app.vercel.app` (your actual URL) |
 | `NEXT_PUBLIC_DEFAULT_SESSION` | `demo` |
 
@@ -46,7 +45,7 @@ Click **Deploy** (or push a commit). Vercel builds and deploys in ~1 min.
 ## 6. Ceremony day checklist
 
 - [ ] Open `/projector/demo` on the big screen
-- [ ] Open `/speaker/demo` on your phone/laptop (enter the `SPEAKER_SECRET`)
+- [ ] Open `/speaker/demo` on your phone/laptop
 - [ ] Test: advance a section, confirm projector updates
 - [ ] Share `https://your-app.vercel.app/s/demo` as the audience QR target
 - [ ] (Optional) Delete any test leaves via speaker panel before the real ceremony
@@ -71,7 +70,6 @@ To test with Redis locally, create `.env.local`:
 ```
 KV_REST_API_URL=https://your-kv-url.upstash.io
 KV_REST_API_TOKEN=your-token-here
-SPEAKER_SECRET=dev-secret
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_DEFAULT_SESSION=demo
 ```

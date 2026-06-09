@@ -15,14 +15,6 @@ export async function POST(
     return NextResponse.json({ error: "Session not found" }, { status: 404 });
   }
 
-  const secret = process.env.SPEAKER_SECRET;
-  if (secret) {
-    const auth = request.headers.get("x-speaker-secret");
-    if (auth !== secret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
-
   let body: { type: SyncEventType; payload?: { sectionId?: string } };
   try {
     body = await request.json();

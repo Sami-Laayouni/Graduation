@@ -14,10 +14,9 @@ import {
 
 interface Props {
   session: SessionContent;
-  speakerSecret?: string;
 }
 
-export function SpeakerDashboard({ session, speakerSecret }: Props) {
+export function SpeakerDashboard({ session }: Props) {
   const { liveState, connected, error } = useLiveSession(session.id);
   const [counts, setCounts] = useState({ audience: 0, total: 0 });
   const [busy, setBusy] = useState(false);
@@ -37,18 +36,16 @@ export function SpeakerDashboard({ session, speakerSecret }: Props) {
     async (type: SyncEventType, payload?: Record<string, unknown>) => {
       setBusy(true);
       try {
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-        if (speakerSecret) headers["x-speaker-secret"] = speakerSecret;
         await fetch(`/api/session/${session.id}/event`, {
           method: "POST",
-          headers,
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type, payload }),
         });
       } finally {
         setBusy(false);
       }
     },
-    [session.id, speakerSecret]
+    [session.id]
   );
 
   const setMode = (m: ProjectorMode) =>

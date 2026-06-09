@@ -27,14 +27,6 @@ export async function DELETE(
     return NextResponse.json({ error: "Session not found" }, { status: 404 });
   }
 
-  const secret = process.env.SPEAKER_SECRET;
-  if (secret) {
-    const auth = request.headers.get("x-speaker-secret");
-    if (auth !== secret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
-
   await clearLeaves(id);
   await resetLeafCount(id);
   return NextResponse.json({ ok: true, cleared: true });
