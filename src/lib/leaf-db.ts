@@ -59,7 +59,7 @@ async function redisGetLeafCount(sessionId: string): Promise<number> {
 async function redisUpdateLeaf(
   sessionId: string,
   userSessionId: string,
-  fields: Partial<Pick<LeafRecord, "argumentText" | "isPublic" | "username" | "updatedAt">>,
+  fields: Partial<Pick<LeafRecord, "argumentText" | "isPublic" | "username" | "updatedAt" | "leafSeed">>,
 ): Promise<LeafRecord | null> {
   const key   = leafListKey(sessionId);
   const items = await redis!.lrange(key, 0, -1);
@@ -139,7 +139,7 @@ export async function saveLeaf(leaf: LeafRecord): Promise<void> {
 
 export async function updateLeaf(
   userSessionId: string,
-  fields: Partial<Pick<LeafRecord, "argumentText" | "isPublic" | "username" | "updatedAt">>,
+  fields: Partial<Pick<LeafRecord, "argumentText" | "isPublic" | "username" | "updatedAt" | "leafSeed">>,
   sessionId = "demo",
 ): Promise<LeafRecord | null> {
   if (USE_REDIS && redis) {

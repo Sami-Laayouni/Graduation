@@ -5,7 +5,7 @@ const sessionId = process.env.NEXT_PUBLIC_DEFAULT_SESSION ?? demoSession.slug;
 
 export default function HomePage() {
   return (
-    <main className="min-h-dvh flex flex-col items-center justify-center px-6 text-center relative overflow-hidden"
+    <main className="min-h-dvh flex flex-col items-center justify-center px-6 py-10 text-center relative overflow-x-hidden touch-scroll-y"
       style={{
         background: "linear-gradient(180deg, #04060d 0%, #070b14 55%, #04060d 100%)"
       }}

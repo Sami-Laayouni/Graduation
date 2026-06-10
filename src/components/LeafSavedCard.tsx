@@ -85,6 +85,9 @@ export function LeafSavedCard({
           <h2 className="audience-body text-sm font-medium text-white/80">
             {s.shareTitle}
           </h2>
+          <p className="audience-body text-sm text-white/55 leading-relaxed">
+            {s.shareDescription}
+          </p>
           <label className="flex items-start gap-3 cursor-pointer select-none">
             <button
               type="button"

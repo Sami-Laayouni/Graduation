@@ -527,6 +527,15 @@ export function drawAudienceLeaves(
     ctx.translate(x, y);
     ctx.rotate(rot);
 
+    if (dna.isPublic && dna.username) {
+      const fontSize = Math.max(8, Math.min(14, rx * 0.72));
+      ctx.font = `500 ${fontSize}px system-ui, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = leafCol(0.78, p.stage ? 0.38 : 0.28);
+      ctx.fillText(dna.username, 0, 0);
+    }
+
     ctx.shadowColor = leafCol(1, 0.50);
     ctx.shadowBlur  = (p.stage ? 7 : 4) + morph * (p.stage ? 10 : 6);
 

@@ -89,7 +89,7 @@ export function SpeakerDashboard({ session }: Props) {
   }, [busy, currentIdx, total, emit]);
 
   return (
-    <div className="min-h-dvh bg-ceremony-bg text-ceremony-text p-4 md:p-8">
+    <div className="min-h-dvh bg-ceremony-bg text-ceremony-text p-4 md:p-8 touch-scroll-y overflow-x-hidden">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <header className="flex flex-wrap items-center justify-between gap-4 mb-5">

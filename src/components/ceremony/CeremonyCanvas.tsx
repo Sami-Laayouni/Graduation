@@ -40,6 +40,11 @@ const FALLING_LEAF_STATES: ProjectorVisualState[] = [
   "seasons_cycle", "forest_zoom", "life_stages", "end_card",
 ];
 
+/** Time each season holds before advancing (section 30) */
+const SEASON_CYCLE_INTERVAL_MS = 9_000;
+/** Leaf / palette morph length when the season changes */
+const SEASON_MORPH_DURATION_MS = 6_500;
+
 export function CeremonyCanvas({
   state,
   season,
@@ -98,10 +103,10 @@ export function CeremonyCanvas({
   useEffect(() => { setCycleSeason(season); }, [season]);
 
   // Season cycle — section 30 only (one place, no double cycling)
-  // 5 s between changes gives the audience time to feel each season
+  // ~9 s between changes gives the audience time to feel each season
   useEffect(() => {
     if (!isSeasonsSection || reduced) return;
-    const id = setInterval(() => setCycleSeason((s) => nextSeason(s)), 5000);
+    const id = setInterval(() => setCycleSeason((s) => nextSeason(s)), SEASON_CYCLE_INTERVAL_MS);
     return () => clearInterval(id);
   }, [isSeasonsSection, reduced]);
 
@@ -122,7 +127,7 @@ export function CeremonyCanvas({
 
     cancelAnimationFrame(morphRafRef.current);
     const start = performance.now();
-    const duration = 4500; // longer morph so the colour wash fully saturates
+    const duration = SEASON_MORPH_DURATION_MS;
 
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / duration);
@@ -242,7 +247,7 @@ export function CeremonyCanvas({
       {/* Full-page seasonal colour wash — only during seasons section */}
       {isSeasonsSection && (
         <div
-          className="absolute inset-0 pointer-events-none z-[1] transition-[background-color] duration-[2400ms] ease-in-out"
+          className="absolute inset-0 pointer-events-none z-[1] transition-[background-color] duration-[4000ms] ease-in-out"
           style={{ backgroundColor: SEASON_WASH[displaySeason] }}
         />
       )}

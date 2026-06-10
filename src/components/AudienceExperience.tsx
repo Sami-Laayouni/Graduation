@@ -18,6 +18,7 @@ import { LeafPreview } from "./LeafPreview";
 import { LeafSavedCard } from "./LeafSavedCard";
 import { LookUpBanner } from "./LookUpBanner";
 import { playLeafChime } from "@/lib/sounds";
+import { leafSavedStrings } from "@/lib/leaf-saved-i18n";
 import {
   FINALE_CONGRATULATIONS_DELAY_MS,
   endCaptionHasFinale,
@@ -170,7 +171,7 @@ export function AudienceExperience({ session }: Props) {
 
   return (
     <div className={clsx(
-      "min-h-dvh flex flex-col fairy-page relative overflow-x-hidden",
+      "min-h-dvh fairy-page relative overflow-x-hidden touch-scroll-y",
       highContrast && "high-contrast",
       largeText && "large-text",
     )}>
@@ -196,8 +197,11 @@ export function AudienceExperience({ session }: Props) {
 
       {/* Header */}
       <header
-        className="relative z-10 flex items-center justify-between gap-2 audience-safe-x audience-safe-top px-3 sm:px-4 py-2.5 sm:py-3 shrink-0"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+        className="sticky top-0 z-20 flex items-center justify-between gap-2 audience-safe-x audience-safe-top px-3 sm:px-4 py-2.5 sm:py-3 shrink-0 backdrop-blur-md"
+        style={{
+          borderBottom: "1px solid rgba(255,255,255,0.05)",
+          background: "rgba(4, 6, 13, 0.88)",
+        }}
       >
         <div className="flex items-center gap-2 min-w-0">
           <div className="shrink-0" style={{ opacity: 0.6 }}>{LEAF_SVG}</div>
@@ -214,10 +218,12 @@ export function AudienceExperience({ session }: Props) {
         </div>
       </header>
 
-      {/* Main — scrollable; start-aligned so post-submit content scrolls on phone */}
+      {/* Main — page scrolls on mobile; min-height keeps captions centered when short */}
       <main className={clsx(
-        "relative z-10 flex-1 flex flex-col min-h-0 py-3 sm:py-4 px-2 sm:px-3 gap-3 sm:gap-4 overflow-y-auto overscroll-y-contain audience-safe-x",
-        showThanks || showReflection ? "justify-start" : "justify-center",
+        "relative z-10 flex flex-col py-3 sm:py-4 px-2 sm:px-3 gap-3 sm:gap-4 audience-safe-x",
+        showThanks || showReflection
+          ? "justify-start"
+          : "min-h-[calc(100dvh-8.5rem)] justify-center",
       )}>
         {showLookUpBanner && (
           <LookUpBanner language={language} sticky className="shrink-0" />
@@ -270,7 +276,7 @@ export function AudienceExperience({ session }: Props) {
                     Your leaf is on the tree
                   </p>
                   <p className="text-sm leading-relaxed max-w-xs" style={{ color: "rgba(200,216,240,0.55)" }}>
-                    This leaf stays here for 15+ years. Update your answer anytime and it will change on the projector too.
+                    {leafSavedStrings[language].thankYouSub}
                   </p>
                 </motion.div>
               </motion.div>

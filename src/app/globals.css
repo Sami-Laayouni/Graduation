@@ -19,7 +19,12 @@
 }
 
 /* ── Base ───────────────────────────────────────────────────────────────── */
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  height: auto;
+  overflow-y: auto;
+  -webkit-text-size-adjust: 100%;
+}
 
 body {
   background: var(--bg);
@@ -27,6 +32,15 @@ body {
   font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;
   min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Smooth momentum scroll on iOS (nested panels or page wrappers) */
+.touch-scroll-y {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

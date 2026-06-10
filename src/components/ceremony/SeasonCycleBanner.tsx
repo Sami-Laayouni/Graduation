@@ -15,7 +15,7 @@ const labels: Record<Season, string> = {
 const LIFE_AFTER_HS: Record<Season, string> = {
   spring: "College",
   summer: "j** (jobs)",
-  autumn: "Adventures",
+  autumn: "Learning",
   winter: "Family",
 };
 

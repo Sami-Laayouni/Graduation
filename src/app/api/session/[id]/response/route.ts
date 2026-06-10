@@ -104,7 +104,13 @@ export async function PATCH(
   }
 
   const fields: Parameters<typeof updateLeaf>[1] = {};
-  if (responseText?.trim())   fields.argumentText = responseText.trim();
+  if (responseText?.trim()) {
+    fields.argumentText = responseText.trim();
+    const existing = await getLeafByUserSession(userSessionId, id);
+    if (existing) {
+      fields.leafSeed = seedFromId(`${existing.id}:${responseText.trim()}`);
+    }
+  }
   if (isPublic !== undefined) fields.isPublic     = isPublic;
   if (username !== undefined) fields.username     = username?.trim() || undefined;
 
