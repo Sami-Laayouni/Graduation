@@ -6,11 +6,7 @@ import type { LiveSessionState, SessionContent, SyncEventType } from "@/lib/type
 import { SyncIndicator } from "./SyncIndicator";
 import { useLiveSession } from "@/hooks/useLiveSession";
 import { usePresence } from "@/hooks/usePresence";
-import {
-  asiVeinCount,
-  leafZoomT,
-  TOTAL_ASI_VEINS,
-} from "@/lib/visual-progress";
+import { SpeakerScript } from "./SpeakerScript";
 
 interface Props {
   session: SessionContent;
@@ -19,8 +15,25 @@ interface Props {
 export function SpeakerDashboard({ session }: Props) {
   const { liveState, connected, error, refresh, applyState } = useLiveSession(session.id);
   const [counts, setCounts] = useState({ audience: 0, total: 0, samePage: 0 });
+  const [storedLeafCount, setStoredLeafCount] = useState(0);
   const [busy, setBusy] = useState(false);
   usePresence(session.id, "speaker");
+
+  const fetchStoredLeafCount = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/session/${session.id}/leaves`, { cache: "no-store" });
+      if (res.ok) {
+        const data = (await res.json()) as { total?: number };
+        setStoredLeafCount(data.total ?? 0);
+      }
+    } catch { /* ignore */ }
+  }, [session.id]);
+
+  useEffect(() => {
+    void fetchStoredLeafCount();
+  }, [fetchStoredLeafCount, liveState?.leafPulseAt]);
+
+  const leafTotal = Math.max(liveState?.leafCount ?? 0, storedLeafCount);
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -132,7 +145,10 @@ export function SpeakerDashboard({ session }: Props) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ count: 100 }),
               });
-              if (res.ok) void refresh();
+              if (res.ok) {
+                void refresh();
+                void fetchStoredLeafCount();
+              }
             } finally {
               setBusy(false);
             }
@@ -143,19 +159,23 @@ export function SpeakerDashboard({ session }: Props) {
         </button>
         <button
           type="button"
-          disabled={busy || (liveState?.leafCount ?? 0) === 0}
+          disabled={busy || leafTotal === 0}
           onClick={async () => {
-            if (!confirm(`Remove all ${liveState?.leafCount ?? 0} leaves from the tree? This cannot be undone.`)) return;
+            if (!confirm(`Remove all ${leafTotal} leaves from the tree? This cannot be undone.`)) return;
             setBusy(true);
             try {
-              await fetch(`/api/session/${session.id}/leaves`, { method: "DELETE" });
+              const res = await fetch(`/api/session/${session.id}/leaves`, { method: "DELETE" });
+              if (res.ok) {
+                setStoredLeafCount(0);
+                void refresh();
+              }
             } finally {
               setBusy(false);
             }
           }}
           className="btn-ceremony text-sm border-red-400/30 text-red-300/80 hover:border-red-400/60 hover:text-red-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
-          🍃 Clear all leaves ({liveState?.leafCount ?? 0})
+          Clear all leaves ({leafTotal})
         </button>
       </div>
 
@@ -203,23 +223,13 @@ export function SpeakerDashboard({ session }: Props) {
             <div className="flex items-center gap-3 text-xs" style={{ color: "rgba(200,216,240,0.38)" }}>
               <span>{liveState?.projectorState ?? "—"}</span>
               <span>·</span>
-              <span>{liveState?.leafCount ?? 0} leaves</span>
+              <span>{leafTotal} leaves</span>
             </div>
           </div>
 
-          {/* ★ THE SCRIPT — large, readable, high contrast */}
+          {/* ★ THE SCRIPT — one beat per line, grouped by idea */}
           <div className="flex-1 overflow-y-auto px-7 py-6">
-            <p
-              className="whitespace-pre-line leading-[1.85] select-text"
-              style={{
-                fontSize: "clamp(1.15rem, 2.2vw, 1.55rem)",
-                color: "#f0f4ff",
-                fontFamily: "Georgia, 'Times New Roman', serif",
-                letterSpacing: "0.01em",
-              }}
-            >
-              {current?.speakerText ?? "No section selected"}
-            </p>
+            <SpeakerScript text={current?.speakerText ?? ""} />
           </div>
 
           {/* Peek: next section */}

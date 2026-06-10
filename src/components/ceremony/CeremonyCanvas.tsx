@@ -18,6 +18,7 @@ import { LeafPopEffect } from "./LeafPopEffect";
 import { EndCardOverlay } from "./EndCardOverlay";
 import { ForestSpaceOverlay } from "./ForestSpaceOverlay";
 import { CeremonyQR } from "../CeremonyQR";
+import { FINALE_CONGRATULATIONS_DELAY_MS } from "@/lib/finale-timing";
 
 interface Props {
   state:          ProjectorVisualState;
@@ -177,6 +178,20 @@ export function CeremonyCanvas({
   );
 
   const isEndCard = state === "end_card";
+  const [showEndCelebration, setShowEndCelebration] = useState(false);
+
+  useEffect(() => {
+    if (!isEndCard) {
+      setShowEndCelebration(false);
+      return;
+    }
+    setShowEndCelebration(false);
+    const t = setTimeout(
+      () => setShowEndCelebration(true),
+      FINALE_CONGRATULATIONS_DELAY_MS,
+    );
+    return () => clearTimeout(t);
+  }, [isEndCard, sectionId]);
 
   // Re-key the space overlay each time we enter forest mode
   const forestEntryKeyRef = useRef(0);
@@ -199,8 +214,8 @@ export function CeremonyCanvas({
     <div className="relative w-full h-full overflow-hidden bg-[#010205]">
       <motion.div
         className="absolute inset-0"
-        key={isEndCard ? "scene-finale" : "scene"}
-        initial={isEndCard ? { scale: 0.32, opacity: 0 } : false}
+        key={showEndCelebration ? "scene-finale" : "scene"}
+        initial={showEndCelebration ? { scale: 0.32, opacity: 0 } : false}
         animate={{ scale: 1, opacity: 1 }}
         transition={isEndCard ? { duration: 2.6, ease: [0.14, 1, 0.34, 1] } : { duration: 0 }}
         style={{ transformOrigin: "50% 72%" }}
@@ -248,7 +263,7 @@ export function CeremonyCanvas({
       )}
 
       <EndCardOverlay
-        visible={isEndCard}
+        visible={showEndCelebration}
         cueText={cueText}
         stage={stage}
       />

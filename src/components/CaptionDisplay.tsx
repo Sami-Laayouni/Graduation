@@ -8,6 +8,8 @@ interface Props {
   text: string;
   language: LanguageCode;
   lookUpNudge?: boolean;
+  /** Short "Look up ↑" only — no headline or detail (after user submitted) */
+  lookUpMinimal?: boolean;
   lookUpLabel?: string;
   lookUpHeadline?: string;
   lookUpDetail?: string;
@@ -19,6 +21,7 @@ export function CaptionDisplay({
   text,
   language,
   lookUpNudge,
+  lookUpMinimal,
   lookUpLabel,
   lookUpHeadline,
   lookUpDetail,
@@ -56,7 +59,22 @@ export function CaptionDisplay({
       </AnimatePresence>
 
       <AnimatePresence>
-        {lookUpNudge && (lookUpHeadline || lookUpLabel) && (
+        {lookUpNudge && lookUpMinimal && lookUpLabel && (
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            className={clsx(
+              "w-full text-center font-serif text-lg sm:text-xl font-medium text-emerald-200/90 tracking-wide",
+              isRtl && "rtl-flip",
+            )}
+            dir={isRtl ? "rtl" : "ltr"}
+          >
+            {lookUpLabel}
+          </motion.p>
+        )}
+        {lookUpNudge && !lookUpMinimal && (lookUpHeadline || lookUpLabel) && (
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}

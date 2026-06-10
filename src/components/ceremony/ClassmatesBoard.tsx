@@ -32,6 +32,10 @@ const CLASSMATES = [
   "ChatGPT",
 ];
 
+const COLUMN_SPLIT = Math.ceil(CLASSMATES.length / 2);
+const LEFT_COLUMN = CLASSMATES.slice(0, COLUMN_SPLIT);
+const RIGHT_COLUMN = CLASSMATES.slice(COLUMN_SPLIT);
+
 const DEFAULT_NAME_COLOR = "rgba(218,230,250,0.92)";
 
 interface NameStyle {
@@ -57,26 +61,56 @@ interface Props {
   stage?: boolean;
 }
 
+function NameRow({
+  name,
+  rowPx,
+  nameSize,
+}: {
+  name: string;
+  rowPx: number;
+  nameSize: string;
+}) {
+  const style = NAME_STYLE[name];
+  return (
+    <div
+      className="flex items-center justify-center w-full px-1"
+      style={{ height: rowPx, minHeight: rowPx }}
+    >
+      <span
+        className="font-serif text-center leading-tight"
+        style={{
+          color: style?.color ?? DEFAULT_NAME_COLOR,
+          fontSize: nameSize,
+          letterSpacing: "0.04em",
+          textShadow: style?.textShadow,
+          fontWeight: style?.fontWeight,
+        }}
+      >
+        {name}
+      </span>
+    </div>
+  );
+}
+
 export function ClassmatesBoard({ stage = false }: Props) {
   const contentRef = useRef<HTMLDivElement>(null);
-  const [scroll, setScroll]   = useState<{ start: number; end: number; dur: number } | null>(null);
-  const [fading, setFading]   = useState(false);
+  const [scroll, setScroll] = useState<{ start: number; end: number; dur: number } | null>(null);
+  const [fading, setFading] = useState(false);
 
-  const nameSize   = stage ? "1.45rem" : "1.20rem";
+  const nameSize = stage ? "1.35rem" : "1.05rem";
   const headerSize = stage ? "0.80rem" : "0.68rem";
-  const rowPx      = stage ? 54 : 46;
+  const rowPx = stage ? 52 : 44;
 
   useEffect(() => {
     const measure = () => {
       const el = contentRef.current;
       if (!el) return;
-      const vh      = window.innerHeight;
+      const vh = window.innerHeight;
       const content = el.offsetHeight;
-      const pxPerSec = stage ? 88 : 72;
+      const pxPerSec = stage ? 115 : 95;
 
-      // Start almost in view — header peeks in immediately, names follow fast
       const start = vh - rowPx * 3;
-      const end   = -(content - rowPx * 2);
+      const end = -(content - rowPx * 2);
 
       setScroll({
         start,
@@ -139,10 +173,9 @@ export function ClassmatesBoard({ stage = false }: Props) {
             : { duration: 0 }
         }
       >
-        {/* Compact header — names arrive sooner */}
         <div
           className="flex flex-col items-center text-center"
-          style={{ paddingTop: rowPx * 0.4, paddingBottom: rowPx * 0.6 }}
+          style={{ paddingTop: rowPx * 0.4, paddingBottom: rowPx * 0.5 }}
         >
           <div
             style={{
@@ -185,30 +218,24 @@ export function ClassmatesBoard({ stage = false }: Props) {
           />
         </div>
 
-        <div className="flex flex-col items-center">
-          {CLASSMATES.map((name) => {
-            const style = NAME_STYLE[name];
-            return (
-            <div
-              key={name}
-              className="flex items-center justify-center w-full"
-              style={{ height: rowPx }}
-            >
-              <span
-                className="font-serif text-center"
-                style={{
-                  color:       style?.color ?? DEFAULT_NAME_COLOR,
-                  fontSize:    nameSize,
-                  letterSpacing: "0.06em",
-                  textShadow:  style?.textShadow,
-                  fontWeight:  style?.fontWeight,
-                }}
-              >
-                {name}
-              </span>
-            </div>
-            );
-          })}
+        <div
+          className="mx-auto grid grid-cols-2 w-full"
+          style={{
+            maxWidth: stage ? "920px" : "100%",
+            columnGap: stage ? "2.5rem" : "0.75rem",
+            paddingInline: stage ? "2rem" : "0.5rem",
+          }}
+        >
+          <div className="flex flex-col items-center min-w-0">
+            {LEFT_COLUMN.map((name) => (
+              <NameRow key={name} name={name} rowPx={rowPx} nameSize={nameSize} />
+            ))}
+          </div>
+          <div className="flex flex-col items-center min-w-0">
+            {RIGHT_COLUMN.map((name) => (
+              <NameRow key={name} name={name} rowPx={rowPx} nameSize={nameSize} />
+            ))}
+          </div>
         </div>
 
         <div style={{ height: rowPx }} aria-hidden />

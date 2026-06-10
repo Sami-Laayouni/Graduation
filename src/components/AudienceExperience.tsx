@@ -18,6 +18,11 @@ import { LeafPreview } from "./LeafPreview";
 import { LeafSavedCard } from "./LeafSavedCard";
 import { LookUpBanner } from "./LookUpBanner";
 import { playLeafChime } from "@/lib/sounds";
+import {
+  FINALE_CONGRATULATIONS_DELAY_MS,
+  endCaptionHasFinale,
+  endCaptionPrelude,
+} from "@/lib/finale-timing";
 interface Props { session: SessionContent; }
 
 const LEAF_SVG = (
@@ -44,6 +49,7 @@ export function AudienceExperience({ session }: Props) {
   const [showThanks,   setShowThanks]   = useState(false);
   const [showBurst,    setShowBurst]    = useState(false);
   const [myLeafDNA,    setMyLeafDNA]    = useState<LeafDNA | null>(null);
+  const [endFinaleRevealed, setEndFinaleRevealed] = useState(false);
 
   const t             = uiStrings[language];
   const isPersonal    = liveState?.projectorMode === "personal";
@@ -64,12 +70,35 @@ export function AudienceExperience({ session }: Props) {
 
   const showReflection = inReflection && !submitted && !showThanks;
   const isLanguageBoot = section.id === "qr_intro";
-  const showLookUpPrompt = !!(liveState?.lookUpNudge || showThanks);
+  const showLookUpBanner = !!liveState?.lookUpNudge && !submitted;
+  const showSimpleLookUp = !!liveState?.lookUpNudge && submitted && !showThanks && !showReflection;
 
   const captionText = useMemo(() => {
     if (liveState?.mode === "ended") return t.sessionEnded;
     return trans?.captionText ?? "";
   }, [trans, liveState?.mode, t.sessionEnded, language]);
+
+  useEffect(() => {
+    if (section.id !== "end") {
+      setEndFinaleRevealed(false);
+      return;
+    }
+    setEndFinaleRevealed(false);
+    if (!endCaptionHasFinale(captionText)) {
+      setEndFinaleRevealed(true);
+      return;
+    }
+    const t = setTimeout(
+      () => setEndFinaleRevealed(true),
+      FINALE_CONGRATULATIONS_DELAY_MS,
+    );
+    return () => clearTimeout(t);
+  }, [section.id, liveState?.currentSectionId, captionText]);
+
+  const displayCaption = useMemo(() => {
+    if (section.id !== "end" || endFinaleRevealed) return captionText;
+    return endCaptionPrelude(captionText);
+  }, [section.id, endFinaleRevealed, captionText]);
 
   // submitOne returns the LeafDNA on success so handleSubmit can batch all
   // state updates (DNA + showThanks) into the same synchronous block, which
@@ -190,7 +219,7 @@ export function AudienceExperience({ session }: Props) {
         "relative z-10 flex-1 flex flex-col min-h-0 py-3 sm:py-4 px-2 sm:px-3 gap-3 sm:gap-4 overflow-y-auto overscroll-y-contain audience-safe-x",
         showThanks || showReflection ? "justify-start" : "justify-center",
       )}>
-        {showLookUpPrompt && (
+        {showLookUpBanner && (
           <LookUpBanner language={language} sticky className="shrink-0" />
         )}
         <AnimatePresence mode="wait">
@@ -238,10 +267,10 @@ export function AudienceExperience({ session }: Props) {
                   transition={{ delay: 0.7, duration: 0.8 }}
                 >
                   <p className="font-serif text-xl sm:text-2xl" style={{ color: "#e8ecf4" }}>
-                    Your leaf
+                    Your leaf is on the tree
                   </p>
-                  <p className="text-sm" style={{ color: "rgba(200,216,240,0.45)" }}>
-                    Unique to you. Saved permanently.
+                  <p className="text-sm leading-relaxed max-w-xs" style={{ color: "rgba(200,216,240,0.55)" }}>
+                    This leaf stays here for 15+ years. Update your answer anytime and it will change on the projector too.
                   </p>
                 </motion.div>
               </motion.div>
@@ -251,7 +280,6 @@ export function AudienceExperience({ session }: Props) {
                 language={language}
                 sessionId={session.id}
                 myLeafDNA={myLeafDNA}
-                lookUpNudge={!!(liveState?.lookUpNudge || showThanks)}
               />
             )
           ) : isLanguageBoot ? (
@@ -271,23 +299,14 @@ export function AudienceExperience({ session }: Props) {
               transition={{ duration: 0.4 }}
             >
               <CaptionDisplay
-                text={captionText}
+                text={displayCaption}
                 language={language}
-                lookUpNudge={liveState?.lookUpNudge && !showLookUpPrompt}
+                lookUpNudge={showSimpleLookUp}
+                lookUpMinimal
                 lookUpLabel={t.lookUp}
-                lookUpHeadline={t.lookUpHeadline}
-                lookUpDetail={t.lookUpDetail}
                 large={largeText}
                 fairy
               />
-              {liveState?.lookUpNudge && !showLookUpPrompt && (
-                <p
-                  className="audience-muted text-center text-sm sm:text-base font-medium leading-relaxed px-2 sm:px-4 max-w-md mx-auto text-emerald-200/80"
-                  dir={language === "ar" ? "rtl" : "ltr"}
-                >
-                  {t.lookUpReminder}
-                </p>
-              )}
             </motion.div>
           )}
         </AnimatePresence>

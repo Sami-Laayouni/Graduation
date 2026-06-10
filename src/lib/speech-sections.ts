@@ -39,7 +39,7 @@ export const speechSections: SpeechSection[] = [
     id: "welcome_1",
     title: "2. Hello",
     speakerText:
-      "Hello everybody!\nI would like to welcome all of you here today: parents, friends, family, teachers, that random cat that decided to walk in, and, of course, the Class of 2026 (claps).",
+      "Hello everybody!\n\nI would like to welcome all of you here today: parents, friends, family, teachers, that random cat that decided to walk in, and, of course, the Class of 2026 (claps).",
     projectorState: "cosmos",
     season: "winter",
     audienceState: "captions_visible",
@@ -90,7 +90,7 @@ export const speechSections: SpeechSection[] = [
     id: "thanks_1",
     title: "5. Thank yous",
     speakerText:
-      "Before I begin, as is common tradition, I would like to thank everyone who made this journey possible. Now, of course, I won't bore you by reading out the names of all these people.",
+      "Before I begin, as is common tradition, I would like to thank everyone who made this journey possible.\n\nNow, of course, I won't bore you by reading out the names of all these people.",
     projectorState: "cosmos",
     season: "winter",
     audienceState: "captions_visible",
@@ -107,7 +107,7 @@ export const speechSections: SpeechSection[] = [
     id: "thanks_2",
     title: "6. Real thanks",
     speakerText:
-      "And I also don't think that simply mentioning their names in a speech is enough to show the level of appreciation that these people deserve.\nSo I encourage us all to really take the time to show our appreciation for those who matter to us by spending quality time with them.",
+      "And I also don't think that simply mentioning their names in a speech is enough to show the level of appreciation that these people deserve.\n\nSo I encourage us all to really take the time to show our appreciation for those who matter to us by spending quality time with them.",
     projectorState: "cosmos",
     season: "winter",
     audienceState: "captions_visible",
@@ -124,7 +124,7 @@ export const speechSections: SpeechSection[] = [
     id: "bilal",
     title: "7. Bilal & Simo",
     speakerText:
-      "However, I would like to make an exception to shout out my friends Bilal and Simo. You guys each paid me 50 DH for this shoutout, by the way.",
+      "However, I would like to make an exception to shout out my friends Bilal and Simo.\n\nYou guys each paid me 50 DH for this shoutout, by the way.",
     projectorState: "cosmos",
     season: "spring",
     audienceState: "captions_visible",
@@ -175,7 +175,7 @@ export const speechSections: SpeechSection[] = [
     id: "wizards_2",
     title: "9. Wizard robes",
     speakerText:
-      "I mean, at one point, we probably all wished to dress up like wizards outside of Halloween, right?\nAlso, in true wizarding fashion, our robes were rumored to turn invisible and disappear before we could put them on.",
+      "I mean, at one point, we probably all wished to dress up like wizards outside of Halloween, right?\n\nAlso, in true wizarding fashion, our robes were rumored to turn invisible and disappear before we could put them on.",
     projectorState: "cosmos",
     season: "spring",
     audienceState: "captions_visible",
@@ -192,7 +192,7 @@ export const speechSections: SpeechSection[] = [
     id: "asi_intro",
     title: "10. ASI lessons",
     speakerText:
-      "We have learned many valuable lessons during our time here at ASI, some of which are really unique to an ASI education. These will prepare us as we move on to our next adventures and try to find meaning and purpose in our lives, before ChatGPT takes it all away from us.",
+      "We have learned many valuable lessons during our time here at ASI, some of which are really unique to an ASI education.\n\nThese will prepare us as we move on to our next adventures and try to find meaning and purpose in our lives, before ChatGPT takes it all away from us.",
     projectorState: "leaf_fragment",
     season: "spring",
     audienceState: "captions_visible",
@@ -222,7 +222,7 @@ export const speechSections: SpeechSection[] = [
     id: "ameur_2",
     title: "12. Math & physics",
     speakerText:
-      "We also learned from Dr. Ameur that everything except math and physics in life is useless. I see him in the crowd; he is probably disgusted right now seeing us move toward disciplines like \"biology\" or, as he calls it, \"blah blah blah.\"",
+      "We also learned from Dr. Ameur that everything except math and physics in life is useless.\n\nI see him in the crowd; he is probably disgusted right now seeing us move toward disciplines like \"biology\" or, as he calls it, \"blah blah blah.\"",
     projectorState: "leaf_fragment",
     season: "spring",
     audienceState: "captions_visible",
@@ -239,7 +239,7 @@ export const speechSections: SpeechSection[] = [
     id: "ameur_3",
     title: "13. Always harder",
     speakerText:
-      "Another lesson we learned from Dr. Ameur is that when life gets really hard, it can always get harder. If you just finished an AP Calc exam, who knows? Life might give you an exam that is three times harder than that AP exam on the last day of school.",
+      "Another lesson we learned from Dr. Ameur is that when life gets really hard, it can always get harder.\n\nIf you just finished an AP Calc exam, who knows?\n\nLife might give you an exam that is three times harder than that AP exam on the last day of school.",
     projectorState: "leaf_fragment",
     season: "summer",
     audienceState: "captions_visible",
@@ -273,7 +273,7 @@ export const speechSections: SpeechSection[] = [
     id: "digital",
     title: "15. Platforms",
     speakerText:
-      "It is also only through our journey at ASI that we managed to learn how to use every single software tool we could possibly need: Alma, Microsoft Teams, Google Classroom, Wayground, MAP, Rediker, Ingrade, Apex, Edunation, and, of course, NoteSwap (shameless shoutout). So that whatever we end up using in the future, we have the proper experience to do so, and we can add that to our LinkedIn bio.",
+      "It is also only through our journey at ASI that we managed to learn how to use every single software tool we could possibly need: Alma, Microsoft Teams, Google Classroom, Wayground, MAP, Rediker, Ingrade, Apex, Edunation, and, of course, NoteSwap (shameless shoutout).\n\nSo that whatever we end up using in the future, we have the proper experience to do so, and we can add that to our LinkedIn bio.",
     projectorState: "leaf_fragment",
     season: "summer",
     audienceState: "captions_visible",
@@ -290,7 +290,7 @@ export const speechSections: SpeechSection[] = [
     id: "friendships",
     title: "16. Friendships",
     speakerText:
-      "On a more serious note, ASI's small number of students also made it possible to develop close and meaningful connections with your friends. And I hope that as we begin to face the mythical \"real world,\" that supposedly only our parents live in, we keep these friendships, especially in the difficult times when we need them the most.",
+      "On a more serious note, ASI's small number of students also made it possible to develop close and meaningful connections with your friends.\n\nAnd I hope that as we begin to face the mythical \"real world,\" that supposedly only our parents live in, we keep these friendships, especially in the difficult times when we need them the most.",
     projectorState: "leaf_fragment",
     season: "summer",
     audienceState: "captions_visible",
@@ -359,7 +359,7 @@ export const speechSections: SpeechSection[] = [
     id: "search_2",
     title: "20. Steve Jobs… LEGO",
     speakerText:
-      "I watched many motivational speeches, from Steve Jobs' famous commencement address to SpongeBob SquarePants telling Squidward to live a little, and The Lego Movie's catchy song encouraging people that \"everything is awesome\".\n\nAnd to be honest, after two days, I think I forgot 50% of what each speech was about. So I realized I had two choices: either come up with a very catchy song with a lesson you guys will actually remember, or figure something else out.",
+      "I watched many motivational speeches, from Steve Jobs' famous commencement address to SpongeBob SquarePants telling Squidward to live a little, and The Lego Movie's catchy song encouraging people that \"everything is awesome\".\n\nAnd to be honest, after two days, I think I forgot 50% of what each speech was about.\n\nSo I realized I had two choices: either come up with a very catchy song with a lesson you guys will actually remember, or figure something else out.",
     projectorState: "leaf_reveal",
     season: "autumn",
     audienceState: "captions_visible",
@@ -376,7 +376,7 @@ export const speechSections: SpeechSection[] = [
     id: "search_3",
     title: "21. No catchy song",
     speakerText:
-      "Fortunately enough for you guys... I didn't end up singing.\n\nSo I decided to explore something different for this speech. And to do so, I would like to build off another lesson we learned at ASI for my motivational message.",
+      "Fortunately enough for you guys... I didn't end up singing.\n\nSo I decided to explore something different for this speech.\n\nAnd to do so, I would like to build off another lesson we learned at ASI for my motivational message.",
     projectorState: "leaf_reveal",
     season: "autumn",
     audienceState: "captions_visible",
@@ -393,7 +393,7 @@ export const speechSections: SpeechSection[] = [
     id: "main_1",
     title: "22. Main argument",
     speakerText:
-      "I think by this point, we have all been traumatized into being able to identify the main argument in texts and documents, thanks to Dr. Mouad oops not yet Mr. Mouad and Miss Shillingsburg.\nAnd to quote one of these teachers: \"Everything has a main argument. Now go back and find the main argument in Neo-Islamism vs. Post-Islamism by Ahmed Kabbel.\"",
+      "I think by this point, we have all been traumatized into being able to identify the main argument in texts and documents, thanks to Dr. Mouad oops not yet Mr. Mouad and Miss Shillingsburg.\n\nAnd to quote one of these teachers: \"Everything has a main argument. Now go back and find the main argument in Neo-Islamism vs. Post-Islamism by Ahmed Kabbel.\"",
     projectorState: "leaf_reveal",
     season: "autumn",
     audienceState: "captions_visible",
@@ -411,7 +411,7 @@ export const speechSections: SpeechSection[] = [
     id: "main_2",
     title: "23. Your life's thesis",
     speakerText:
-      "So now, applying what we learned in class, I would like to challenge everybody, including Mr. Mouad, to look for the main argument, or arguments, in their lives. What is the purpose that is driving your life?\n\nBecause when was the last time you truly thought about this? That one time your phone was off in the bathroom? I mean, that was when I wrote this speech, so no judging. But the point is that yes, you will probably reflect on this question during important transitional periods like now, but when do you really think about this outside of these times?",
+      "So now, applying what we learned in class, I would like to challenge everybody, including Mr. Mouad, to look for the main argument, or arguments, in their lives.\n\nWhat is the purpose that is driving your life?\n\nBecause when was the last time you truly thought about this?\n\nThat one time your phone was off in the bathroom?\n\nI mean, that was when I wrote this speech, so no judging.\n\nBut the point is that yes, you will probably reflect on this question during important transitional periods like now, but when do you really think about this outside of these times?",
     projectorState: "leaf_reveal",
     season: "autumn",
     audienceState: "captions_visible",
@@ -429,7 +429,7 @@ export const speechSections: SpeechSection[] = [
     id: "science_1",
     title: "24. Purpose",
     speakerText:
-      "The reason I want to stress this point is because it is the most fundamental question we can ask ourselves, and above all, we humans are really driven by our purpose.",
+      "The reason I want to stress this point is because it is the most fundamental question we can ask ourselves,\n\nand above all, we humans are really driven by our purpose.",
     projectorState: "leaf_reveal",
     season: "autumn",
     audienceState: "captions_visible",
@@ -463,7 +463,7 @@ export const speechSections: SpeechSection[] = [
     id: "qr_reflection",
     title: "26. Scan QR now",
     speakerText:
-      "Now, to continue my lesson, I will give you 20 seconds to scan the QR code above if you haven't already, read through what it says carefully, and try to answer honestly. When you submit your answer, look up at the screen and you should see a leaf be added to this tree.",
+      "Now, to continue my lesson, I will give you 20 seconds to scan the QR code above if you haven't already, read through what it says carefully, and try to answer honestly.\n\nWhen you submit your answer, look up at the screen and you should see a leaf be added to this tree.",
     projectorState: "qr_reflection",
     season: "spring",
     audienceState: "captions_visible",
@@ -515,7 +515,7 @@ export const speechSections: SpeechSection[] = [
     id: "look_up_1",
     title: "29. Look up",
     speakerText:
-      "Now all of you probably had a different experience in these last few seconds. Obviously, I don't expect anybody here to be able to come up with the main argument or purpose of your life in that short amount of time.\n\nIf you were, I am concerned.\n\nSome of you might feel certain about your direction.\nSome of you might feel unsure.\nAnd honestly, both are completely normal.\n\nRight now, if you look up, you will see a leaf representing your answer.",
+      "Now all of you probably had a different experience in these last few seconds.\n\nObviously, I don't expect anybody here to be able to come up with the main argument or purpose of your life in that short amount of time.\n\nIf you were, I am concerned.\n\nSome of you might feel certain about your direction.\n\nSome of you might feel unsure.\n\nAnd honestly, both are completely normal.\n\nRight now, if you look up, you will see a leaf representing your answer.",
     projectorState: "tree_growing",
     season: "spring",
     audienceState: "look_up_nudge",
@@ -532,7 +532,7 @@ export const speechSections: SpeechSection[] = [
     id: "look_up_2",
     title: "30. Seasons",
     speakerText:
-      "And just like the seasons, those leaves change. As time goes on, you will change, and your main argument, the purpose that drives you, may change as well. And when it does, you can update that on the website and it will change here.\n\nSo my point is not that you need to find one purpose and hold onto it forever. My point is to live through those changes consciously, so that you are the one choosing your direction, rather than simply drifting wherever life happens to take you.",
+      "And just like the seasons, those leaves change.\n\nAs time goes on, you will change, and your main argument, the purpose that drives you, may change as well.\n\nAnd when it does, you can update that on the website and it will change here.\n\nSo my point is not that you need to find one purpose and hold onto it forever.\n\nMy point is to live through those changes consciously, so that you are the one choosing your direction, rather than simply drifting wherever life happens to take you.",
     projectorState: "seasons_cycle",
     season: "summer",
     audienceState: "look_up_nudge",
@@ -550,7 +550,7 @@ export const speechSections: SpeechSection[] = [
     id: "closing_1",
     title: "31. Forget the words",
     speakerText:
-      "After this speech, I am sure most of you will forget the words I am going to speak, just as we all forget about our Apex classes until the end of the semester. Mr. Bernard, I promise I will finish it by tomorrow. It is very hard to considerably impact the way you think in the course of 5 minutes.\n\nI mean, we have all attended some classes for years without it happening.\n\nSo I wanted to make sure you guys were left with something after graduation.\nSo tonight, when you leave here, I want to leave you with one idea and one tool.",
+      "After this speech, I am sure most of you will forget the words I am going to speak, just as we all forget about our Apex classes until the end of the semester.\n\nMr. Bernard, I promise I will finish it by tomorrow.\n\nIt is very hard to considerably impact the way you think in the course of 5 minutes.\n\nI mean, we have all attended some classes for years without it happening.\n\nSo I wanted to make sure you guys were left with something after graduation.\n\nSo tonight, when you leave here, I want to leave you with one idea and one tool.",
     projectorState: "forest_zoom",
     season: "autumn",
     audienceState: "captions_visible",
@@ -567,7 +567,7 @@ export const speechSections: SpeechSection[] = [
     id: "closing_2",
     title: "32. The idea and the tool",
     speakerText:
-      "The idea is simple: choose who you want to become, and keep looking for the purpose that drives you. You do not have to discover it today, and you do not have to get it right the first time. Just keep asking yourself the question, and be REALLY honest with yourself about the answer.\n\nThe website is simply a tool to help with that. Every now and then, it will ask you to check in and reflect. Update your leaves. Again, just to clarify, none of this is shared publicly, and by the way, I am not sure if you saw that tiny disclaimer at the beginning of my speech, but by listening to my speech, you agree to my terms and conditions.\n\nAnd if you ever see ads pop up on the website, you may want to check up on me.",
+      "The idea is simple: choose who you want to become, and keep looking for the purpose that drives you.\n\nYou do not have to discover it today, and you do not have to get it right the first time.\n\nJust keep asking yourself the question, and be REALLY honest with yourself about the answer.\n\nThe website is simply a tool to help with that.\n\nEvery now and then, it will ask you to check in and reflect.\n\nUpdate your leaves.\n\nAgain, just to clarify, none of this is shared publicly, and by the way, I am not sure if you saw that tiny disclaimer at the beginning of my speech, but by listening to my speech, you agree to my terms and conditions.\n\nAnd if you ever see ads pop up on the website, you may want to check up on me.",
     projectorState: "forest_zoom",
     season: "autumn",
     audienceState: "captions_visible",
@@ -601,12 +601,12 @@ export const speechSections: SpeechSection[] = [
     id: "end",
     title: "34. Congratulations",
     speakerText:
-      "And if there is one thing I hope we take with us from tonight, it is this:\n\nJust as Mr. Mouad never stopped telling us to look for the main argument in a text, never stop looking for the main argument in your own life.\n\nWe are not perfect. None of us are.\nBut we can choose who we become.\n\nCongratulations, Class of 2026. Thank you, and I will miss you all!",
+      "And if there is one thing I hope we take with us from tonight, it is this:\n\nJust as Mr. Mouad never stopped telling us to look for the main argument in a text, never stop looking for the main argument in your own life.\n\nWe are not perfect.\n\nNone of us are.\n\nBut we can choose who we become.\n\n(15 second pause. Congratulations appear on screen.)\n\nCongratulations, Class of 2026.\n\nThank you, and I will miss you all!",
     projectorState: "end_card",
     season: "winter",
     audienceState: "closing",
     ceremonyState: "ended",
-    estimatedDurationSec: 18,
+    estimatedDurationSec: 33,
     captionEn:
       "And if there is one thing I hope we take with us from tonight, it is this:\n\nJust as Mr. Mouad never stopped telling us to look for the main argument in a text, never stop looking for the main argument in your own life.\n\nWe are not perfect. None of us are.\nBut we can choose who we become.\n\nCongratulations, Class of 2026. Thank you, and I will miss you all!",
     captionFr:
