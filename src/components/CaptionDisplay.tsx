@@ -9,6 +9,8 @@ interface Props {
   language: LanguageCode;
   lookUpNudge?: boolean;
   lookUpLabel?: string;
+  lookUpHeadline?: string;
+  lookUpDetail?: string;
   large?: boolean;
   fairy?: boolean;
 }
@@ -18,13 +20,15 @@ export function CaptionDisplay({
   language,
   lookUpNudge,
   lookUpLabel,
+  lookUpHeadline,
+  lookUpDetail,
   large,
   fairy,
 }: Props) {
   const isRtl = language === "ar";
 
   return (
-    <div className="flex flex-col items-center gap-6 w-full max-w-lg mx-auto px-3">
+    <div className="flex flex-col items-center gap-5 w-full max-w-lg mx-auto px-3">
       <AnimatePresence mode="wait">
         <motion.div
           key={text.slice(0, 48)}
@@ -52,28 +56,43 @@ export function CaptionDisplay({
       </AnimatePresence>
 
       <AnimatePresence>
-        {lookUpNudge && lookUpLabel && (
+        {lookUpNudge && (lookUpHeadline || lookUpLabel) && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, scale: 0.92, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
-            className="flex flex-col items-center gap-3"
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className={clsx("w-full", isRtl && "rtl-flip")}
+            dir={isRtl ? "rtl" : "ltr"}
           >
             <motion.div
-              className="h-px w-16 bg-gradient-to-r from-transparent via-ceremony-glow to-transparent"
-              animate={{ opacity: [0.4, 1, 0.4] }}
-              transition={{ duration: 2.5, repeat: Infinity }}
-            />
-            <p className="text-ceremony-glow text-xs sm:text-sm md:text-base tracking-[0.2em] sm:tracking-[0.35em] uppercase font-sans text-center px-2">
-              {lookUpLabel}
-            </p>
-            <motion.div
-              animate={{ opacity: [0.4, 1, 0.4] }}
+              className="rounded-2xl border-2 border-emerald-400/65 bg-emerald-950/80 px-5 py-4 text-center"
+              animate={{
+                boxShadow: [
+                  "0 0 0 0 rgba(52, 211, 153, 0.4)",
+                  "0 0 24px 4px rgba(52, 211, 153, 0.3)",
+                  "0 0 0 0 rgba(52, 211, 153, 0.4)",
+                ],
+              }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="h-8 w-px bg-ceremony-glow/60"
-              aria-hidden
-            />
+            >
+              <motion.span
+                className="block text-3xl text-emerald-300 mb-1"
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                aria-hidden
+              >
+                ↑
+              </motion.span>
+              <p className="font-serif text-xl sm:text-2xl font-semibold text-emerald-50">
+                {lookUpHeadline ?? lookUpLabel}
+              </p>
+              {lookUpDetail && (
+                <p className="audience-body mt-1.5 text-sm sm:text-base text-emerald-100/85">
+                  {lookUpDetail}
+                </p>
+              )}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

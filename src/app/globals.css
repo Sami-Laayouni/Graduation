@@ -188,18 +188,68 @@ body {
 
 /* ── Accessibility overrides ────────────────────────────────────────────── */
 .high-contrast {
-  --border: rgba(255, 255, 255, 0.35);
-  --text:   #ffffff;
-  --accent: #ffffff;
+  --border:     rgba(255, 255, 255, 0.55);
+  --border-hi:  rgba(255, 255, 255, 0.75);
+  --text:       #ffffff;
+  --text-dim:   #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.88);
+  --accent:     #ffffff;
+  --surface:    rgba(255, 255, 255, 0.14);
+  --surface-hi: rgba(255, 255, 255, 0.22);
 }
 .high-contrast .caption-card,
-.high-contrast .fairy-caption-card {
-  background: rgba(0, 0, 0, 0.85);
-  border-color: rgba(255, 255, 255, 0.5);
+.high-contrast .fairy-caption-card,
+.high-contrast .fairy-reflection-card {
+  background: rgba(0, 0, 0, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.7) !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15) inset !important;
+}
+.high-contrast .caption-text,
+.high-contrast .prompt-text,
+.high-contrast .audience-body,
+.high-contrast .audience-body-lg,
+.high-contrast .audience-muted {
+  color: #ffffff !important;
+}
+.high-contrast .audience-muted {
+  opacity: 1 !important;
+}
+.high-contrast .ceremony-input {
+  background: rgba(0, 0, 0, 0.6);
+  border-color: rgba(255, 255, 255, 0.55);
+  color: #ffffff;
+}
+.high-contrast .fairy-btn,
+.high-contrast .btn-ceremony {
+  border-color: rgba(255, 255, 255, 0.65);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
 }
 
-.large-text .caption-text  { font-size: clamp(1.125rem, 4.5vw, 1.35rem); line-height: 1.65; }
-.large-text .prompt-text   { font-size: clamp(1.05rem, 4vw, 1.2rem); }
+.large-text .caption-text {
+  font-size: clamp(1.25rem, 5vw, 1.65rem) !important;
+  line-height: 1.65 !important;
+}
+.large-text .prompt-text {
+  font-size: clamp(1.15rem, 4.5vw, 1.45rem) !important;
+  line-height: 1.6 !important;
+}
+.large-text .audience-body {
+  font-size: 1.125rem !important;
+  line-height: 1.65 !important;
+}
+.large-text .audience-body-lg {
+  font-size: 1.35rem !important;
+  line-height: 1.5 !important;
+}
+.large-text .audience-muted {
+  font-size: 1rem !important;
+}
+.large-text .ceremony-input,
+.large-text .fairy-btn,
+.large-text .btn-ceremony {
+  font-size: 1.0625rem !important;
+}
 
 @media (max-width: 639px) {
   .fairy-caption-card,

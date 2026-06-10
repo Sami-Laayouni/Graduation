@@ -14,7 +14,7 @@ const labels: Record<Season, string> = {
 /** Life stages after high school — shown under each season name */
 const LIFE_AFTER_HS: Record<Season, string> = {
   spring: "College",
-  summer: "Jobs",
+  summer: "j** (jobs)",
   autumn: "Adventures",
   winter: "Family",
 };
@@ -38,23 +38,23 @@ export function SeasonCycleBanner({ season, stage = true }: Props) {
         transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
       >
         <div
-          className="flex flex-col items-center text-center rounded-xl px-6 py-3 border border-white/14 backdrop-blur-sm"
+          className="flex flex-col items-center text-center rounded-2xl px-8 py-4 sm:px-10 sm:py-5 border border-white/20 backdrop-blur-md min-w-[min(92vw,28rem)]"
           style={{
-            background: "rgba(0, 0, 0, 0.55)",
-            boxShadow: `0 2px 16px rgba(0,0,0,0.4), 0 0 24px -8px ${p.veinGlow}33`,
+            background: "rgba(0, 0, 0, 0.72)",
+            boxShadow: `0 4px 24px rgba(0,0,0,0.5), 0 0 32px -8px ${p.veinGlow}44`,
           }}
         >
           <p
-            className={`font-serif uppercase tracking-[0.22em] text-white/90 ${
-              stage ? "text-base md:text-lg" : "text-sm md:text-base"
+            className={`font-serif uppercase tracking-[0.18em] text-white ${
+              stage ? "text-2xl md:text-3xl lg:text-4xl" : "text-xl md:text-2xl"
             }`}
-            style={{ textShadow: `0 0 12px ${p.veinGlow}44` }}
+            style={{ textShadow: `0 0 16px ${p.veinGlow}55` }}
           >
             {labels[season]}
           </p>
           <motion.p
-            className={`font-serif italic text-white/60 mt-0.5 ${
-              stage ? "text-sm md:text-base" : "text-xs md:text-sm"
+            className={`font-serif italic text-white/75 mt-1 ${
+              stage ? "text-xl md:text-2xl lg:text-3xl" : "text-lg md:text-xl"
             }`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

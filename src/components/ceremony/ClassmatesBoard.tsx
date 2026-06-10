@@ -72,7 +72,7 @@ export function ClassmatesBoard({ stage = false }: Props) {
       if (!el) return;
       const vh      = window.innerHeight;
       const content = el.offsetHeight;
-      const pxPerSec = stage ? 52 : 44;
+      const pxPerSec = stage ? 88 : 72;
 
       // Start almost in view — header peeks in immediately, names follow fast
       const start = vh - rowPx * 3;
@@ -173,7 +173,7 @@ export function ClassmatesBoard({ stage = false }: Props) {
               lineHeight: 1.25,
             }}
           >
-            And to all these amazing people
+            Thank you to these amazing people
           </p>
           <div
             style={{

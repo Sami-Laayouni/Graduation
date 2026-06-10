@@ -418,14 +418,36 @@ function audienceLeafTipIndex(dna: LeafDNA, tipCount: number): number {
 }
 
 function audienceLeafOffset(dna: LeafDNA, tip: BranchTip) {
-  const r1 = 5 + dna.radiusMul * 24;
+  const r1 = 4 + dna.radiusMul * 14;
   const a1 = dna.canopyAngle;
-  const r2 = 3 + dna.rxMul * 16;
+  const r2 = 2 + dna.rxMul * 8;
   const a2 = dna.brightOffset * Math.PI * 7 + dna.ryMul * 2.1;
   return {
     x: tip.x + Math.cos(a1) * r1 + Math.cos(a2) * r2,
     y: tip.y + Math.sin(a1) * r1 + Math.sin(a2) * r2,
   };
+}
+
+/** Keep leaves inside the canopy ellipse so they don't float off the tree */
+function clampLeafToCanopy(
+  x: number,
+  y: number,
+  bx: number,
+  by: number,
+  trunkH: number,
+): { x: number; y: number } {
+  const cx = bx;
+  const cy = by - trunkH * 0.52;
+  const rx = trunkH * 0.50;
+  const ry = trunkH * 0.38;
+  const minY = by - trunkH * 0.92;
+  const maxY = by - trunkH * 0.14;
+
+  let py = Math.min(maxY, Math.max(minY, y));
+  const dy = (py - cy) / ry;
+  const dxMax = rx * Math.sqrt(Math.max(0.05, 1 - dy * dy));
+  const px = Math.min(cx + dxMax * 0.92, Math.max(cx - dxMax * 0.92, x));
+  return { x: px, y: py };
 }
 
 export function audienceLeafAnchor(
@@ -473,6 +495,7 @@ export function drawAudienceLeaves(
   newestId?: string,
   seasonMorphPulse = 0,
   hideNewestId?:    string,
+  canopy?:  { bx: number; by: number; trunkH: number },
 ) {
   if (leaves.length === 0 || tips.length === 0) return;
   const sz = p.stage ? 1.35 : 1.0;
@@ -482,7 +505,10 @@ export function drawAudienceLeaves(
     if (hideNewestId && dna.id === hideNewestId) continue;
     const tipIdx = audienceLeafTipIndex(dna, tips.length);
     const tip    = tips[tipIdx];
-    const { x, y } = audienceLeafOffset(dna, tip);
+    let { x, y } = audienceLeafOffset(dna, tip);
+    if (canopy) {
+      ({ x, y } = clampLeafToCanopy(x, y, canopy.bx, canopy.by, canopy.trunkH));
+    }
 
     const fan  = (dna.brightOffset - 0.5) * 0.85;
     const sway = Math.sin(time * 0.35 + dna.seed * 0.00009) * 0.055;
@@ -750,6 +776,7 @@ export function drawTree(
   drawAudienceLeaves(
     ctx, audienceLeaves, tree.tipPositions, p, time, newestLeafId,
     seasonMorphPulse, hideNewestId,
+    { bx, by, trunkH },
   );
 
   ctx.restore(); // end sway

@@ -12,35 +12,28 @@ interface Props {
 
 function ease() { return [0.16, 1, 0.30, 1] as const; }
 
-/** Moonlit silver — matches the main canvas palette, no blue blobs */
-const MOON = {
-  glow:  "rgba(200, 216, 240,",
-  trunk: "rgba(180, 198, 225, 0.75)",
-  leaf:  "rgba(200, 216, 240, 0.55)",
-  leaf2: "rgba(190, 208, 235, 0.40)",
-  label: "rgba(220, 232, 252, 0.88)",
-};
-
-interface DistantTree {
+interface DistantFlower {
   x: number;
   bottom: number;
   scale: number;
   depth: number;
   label: string;
   delay: number;
+  /** petal hue shift */
+  hue: number;
 }
 
-const DISTANT_TREES: DistantTree[] = [
-  { x: 6,  bottom: 14, scale: 1.05, depth: 0, label: "New people",      delay: 0.3 },
-  { x: 18, bottom: 18, scale: 0.88, depth: 1, label: "New worlds",      delay: 0.5 },
-  { x: 30, bottom: 12, scale: 1.12, depth: 0, label: "New experiences", delay: 0.7 },
-  { x: 42, bottom: 20, scale: 0.82, depth: 2, label: "New chapters",    delay: 0.4 },
-  { x: 58, bottom: 16, scale: 0.95, depth: 1, label: "New paths",       delay: 0.6 },
-  { x: 70, bottom: 13, scale: 1.08, depth: 0, label: "New dreams",      delay: 0.8 },
-  { x: 82, bottom: 19, scale: 0.85, depth: 2, label: "New places",      delay: 0.45 },
-  { x: 93, bottom: 15, scale: 0.92, depth: 1, label: "New stories",     delay: 0.65 },
-  { x: 24, bottom: 28, scale: 0.62, depth: 3, label: "New things",      delay: 0.9 },
-  { x: 76, bottom: 26, scale: 0.58, depth: 3, label: "New beginnings",  delay: 1.0 },
+const DISTANT_FLOWERS: DistantFlower[] = [
+  { x: 6,  bottom: 14, scale: 1.05, depth: 0, label: "New people",      delay: 0.3, hue: 320 },
+  { x: 18, bottom: 18, scale: 0.88, depth: 1, label: "New worlds",      delay: 0.5, hue: 280 },
+  { x: 30, bottom: 12, scale: 1.12, depth: 0, label: "New experiences", delay: 0.7, hue: 340 },
+  { x: 42, bottom: 20, scale: 0.82, depth: 2, label: "New chapters",    delay: 0.4, hue: 260 },
+  { x: 58, bottom: 16, scale: 0.95, depth: 1, label: "New paths",       delay: 0.6, hue: 300 },
+  { x: 70, bottom: 13, scale: 1.08, depth: 0, label: "New dreams",      delay: 0.8, hue: 330 },
+  { x: 82, bottom: 19, scale: 0.85, depth: 2, label: "New places",      delay: 0.45, hue: 270 },
+  { x: 93, bottom: 15, scale: 0.92, depth: 1, label: "New stories",     delay: 0.65, hue: 310 },
+  { x: 24, bottom: 28, scale: 0.62, depth: 3, label: "New things",      delay: 0.9, hue: 290 },
+  { x: 76, bottom: 26, scale: 0.58, depth: 3, label: "New beginnings",  delay: 1.0, hue: 350 },
 ];
 
 function useStars(count: number, seed: number) {
@@ -53,7 +46,7 @@ function useStars(count: number, seed: number) {
     return Array.from({ length: count }, (_, i) => ({
       id: i,
       x: rand() * 100,
-      y: rand() * 55, // keep stars in upper sky only — not over the trees
+      y: rand() * 55,
       size: 0.4 + rand() * 2.2,
       opacity: 0.25 + rand() * 0.75,
       delay: rand() * 5,
@@ -64,73 +57,97 @@ function useStars(count: number, seed: number) {
   }, [count, seed]);
 }
 
-function DistantTreeGraphic({
-  tree,
+function petalPath(cx: number, cy: number, rx: number, ry: number, rot: number): string {
+  const cos = Math.cos(rot);
+  const sin = Math.sin(rot);
+  const px = (dx: number, dy: number) => cx + dx * cos - dy * sin;
+  const py = (dx: number, dy: number) => cy + dx * sin + dy * cos;
+  return [
+    `M ${px(0, ry)}`,
+    `C ${px(rx * 0.6, ry * 0.5)} ${px(rx * 0.85, 0)} ${px(0, -ry * 0.15)}`,
+    `C ${px(-rx * 0.85, 0)} ${px(-rx * 0.6, ry * 0.5)} ${px(0, ry)}`,
+    "Z",
+  ].join(" ");
+}
+
+function DistantFlowerGraphic({
+  flower,
   stage,
 }: {
-  tree: DistantTree;
+  flower: DistantFlower;
   stage: boolean;
 }) {
-  const depthAlpha = [0.92, 0.72, 0.52, 0.38][tree.depth] ?? 0.5;
-  const h = 72 * tree.scale;
-  const w = 28 * tree.scale;
+  const depthAlpha = [0.95, 0.78, 0.58, 0.42][flower.depth] ?? 0.5;
+  const size = 52 * flower.scale;
+  const petalFill = `hsla(${flower.hue}, 42%, 78%, 0.72)`;
+  const petalFill2 = `hsla(${flower.hue}, 35%, 85%, 0.55)`;
+  const centerFill = `hsla(${flower.hue + 20}, 55%, 88%, 0.9)`;
+  const stemStroke = "rgba(180, 198, 220, 0.55)";
 
   return (
     <motion.div
       className="absolute flex flex-col items-center z-[2]"
       style={{
-        left: `${tree.x}%`,
-        bottom: `${tree.bottom}%`,
+        left: `${flower.x}%`,
+        bottom: `${flower.bottom}%`,
         transform: "translateX(-50%)",
         opacity: depthAlpha,
       }}
-      initial={{ opacity: 0, y: 40, scale: 0.7 }}
+      initial={{ opacity: 0, y: 36, scale: 0.65 }}
       animate={{ opacity: depthAlpha, y: 0, scale: 1 }}
-      transition={{ duration: 2.2, delay: tree.delay, ease: ease() }}
+      transition={{ duration: 2.2, delay: flower.delay, ease: ease() }}
     >
       <svg
-        width={w}
-        height={h}
-        viewBox="0 0 28 72"
+        width={size}
+        height={size * 1.35}
+        viewBox="0 0 52 70"
         aria-hidden
         className="overflow-visible"
-        style={{ filter: "drop-shadow(0 0 6px rgba(200,216,240,0.25))" }}
+        style={{ filter: `drop-shadow(0 0 10px hsla(${flower.hue}, 50%, 70%, 0.35))` }}
       >
-        {/* Canopy — neutral moonlit, no solid blue fill blobs */}
-        <ellipse cx="14" cy="18" rx="9" ry="11" fill={MOON.leaf} />
-        <ellipse cx="11" cy="22" rx="6" ry="7" fill={MOON.leaf2} />
-        <ellipse cx="17" cy="21" rx="5.5" ry="6.5" fill={MOON.leaf2} />
-        {/* Trunk + branches */}
+        {/* Stem + leaves */}
         <path
-          d="M14 72 C14 58 13 48 14 38 C14 32 14 28 14 24"
-          stroke={MOON.trunk}
-          strokeWidth="1.8"
+          d="M26 68 C26 52 25 42 26 32"
+          stroke={stemStroke}
+          strokeWidth="1.6"
           fill="none"
           strokeLinecap="round"
         />
-        <path d="M14 38 C8 32 4 26 3 20" stroke={MOON.trunk} strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.7" />
-        <path d="M14 36 C20 30 24 24 25 18" stroke={MOON.trunk} strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.7" />
-        <path d="M14 30 C10 24 8 18 7 14" stroke={MOON.trunk} strokeWidth="0.8" fill="none" strokeLinecap="round" opacity="0.5" />
-        <path d="M14 28 C18 22 20 16 21 12" stroke={MOON.trunk} strokeWidth="0.8" fill="none" strokeLinecap="round" opacity="0.5" />
-        {/* Tiny star on canopy */}
-        <circle cx="14" cy="10" r="1" fill="rgba(255,245,220,0.85)" />
+        <ellipse cx="22" cy="48" rx="4" ry="2.2" fill="rgba(160, 200, 170, 0.35)" transform="rotate(-25 22 48)" />
+        <ellipse cx="30" cy="44" rx="3.5" ry="2" fill="rgba(160, 200, 170, 0.28)" transform="rotate(20 30 44)" />
+
+        {/* Petals — 6 around centre */}
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <path
+            key={i}
+            d={petalPath(26, 22, 9 + (i % 2) * 1.5, 14 + (i % 3), (i / 6) * Math.PI * 2 - Math.PI / 2)}
+            fill={i % 2 === 0 ? petalFill : petalFill2}
+          />
+        ))}
+
+        {/* Centre */}
+        <circle cx="26" cy="22" r="4.5" fill={centerFill} />
+        <circle cx="26" cy="22" r="2" fill="rgba(255, 248, 230, 0.85)" />
+
+        {/* Soft glow behind bloom */}
+        <circle cx="26" cy="22" r="16" fill={`hsla(${flower.hue}, 40%, 75%, 0.12)`} />
       </svg>
 
-      {tree.depth < 3 && (
+      {flower.depth < 3 && (
         <motion.span
           className={`font-serif italic text-center whitespace-nowrap tracking-wide ${
-            stage ? "text-[11px] md:text-xs" : "text-[10px] md:text-[11px]"
+            stage ? "text-xs md:text-sm" : "text-[11px] md:text-xs"
           }`}
           style={{
-            color: MOON.label,
-            textShadow: "0 2px 8px rgba(0,0,0,0.9)",
-            marginTop: -4,
+            color: "rgba(235, 240, 252, 0.9)",
+            textShadow: "0 2px 10px rgba(0,0,0,0.95)",
+            marginTop: 2,
           }}
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, delay: tree.delay + 0.8 }}
+          transition={{ duration: 1.2, delay: flower.delay + 0.8 }}
         >
-          {tree.label}
+          {flower.label}
         </motion.span>
       )}
     </motion.div>
@@ -151,7 +168,6 @@ export function ForestSpaceOverlay({ visible, cueText, stage = true, entryKey }:
           exit={{ opacity: 0 }}
           transition={{ duration: 1.2 }}
         >
-          {/* Subtle dark vignette only — transparent centre so canvas trees show through */}
           <motion.div
             className="absolute inset-0"
             initial={{ scale: 2.2, opacity: 0 }}
@@ -165,7 +181,6 @@ export function ForestSpaceOverlay({ visible, cueText, stage = true, entryKey }:
             }}
           />
 
-          {/* Stars — upper sky only, plain white */}
           <div className="absolute inset-x-0 top-0 h-[58%]">
             {stars.map((star) => (
               <motion.span
@@ -193,14 +208,12 @@ export function ForestSpaceOverlay({ visible, cueText, stage = true, entryKey }:
             ))}
           </div>
 
-          {/* Labeled distant trees */}
           <div className="absolute inset-0 z-[2]">
-            {DISTANT_TREES.map((tree, i) => (
-              <DistantTreeGraphic key={`${tree.label}-${i}`} tree={tree} stage={stage} />
+            {DISTANT_FLOWERS.map((flower, i) => (
+              <DistantFlowerGraphic key={`${flower.label}-${i}`} flower={flower} stage={stage} />
             ))}
           </div>
 
-          {/* Centre cue text */}
           {cueText && (
             <motion.div
               className="absolute inset-0 flex items-center justify-center px-8 md:px-16 z-[3]"

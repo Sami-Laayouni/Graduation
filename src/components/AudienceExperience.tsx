@@ -16,6 +16,7 @@ import { SyncIndicator } from "./SyncIndicator";
 import { LeafBurst } from "./LeafBurst";
 import { LeafPreview } from "./LeafPreview";
 import { LeafSavedCard } from "./LeafSavedCard";
+import { LookUpBanner } from "./LookUpBanner";
 import { playLeafChime } from "@/lib/sounds";
 interface Props { session: SessionContent; }
 
@@ -63,6 +64,7 @@ export function AudienceExperience({ session }: Props) {
 
   const showReflection = inReflection && !submitted && !showThanks;
   const isLanguageBoot = section.id === "qr_intro";
+  const showLookUpPrompt = !!(liveState?.lookUpNudge || showThanks);
 
   const captionText = useMemo(() => {
     if (liveState?.mode === "ended") return t.sessionEnded;
@@ -183,8 +185,14 @@ export function AudienceExperience({ session }: Props) {
         </div>
       </header>
 
-      {/* Main — scrollable on small screens when keyboard / long content */}
-      <main className="relative z-10 flex-1 flex flex-col justify-center min-h-0 py-3 sm:py-4 px-2 sm:px-3 gap-3 sm:gap-4 overflow-y-auto overscroll-y-contain audience-safe-x">
+      {/* Main — scrollable; start-aligned so post-submit content scrolls on phone */}
+      <main className={clsx(
+        "relative z-10 flex-1 flex flex-col min-h-0 py-3 sm:py-4 px-2 sm:px-3 gap-3 sm:gap-4 overflow-y-auto overscroll-y-contain audience-safe-x",
+        showThanks || showReflection ? "justify-start" : "justify-center",
+      )}>
+        {showLookUpPrompt && (
+          <LookUpBanner language={language} sticky className="shrink-0" />
+        )}
         <AnimatePresence mode="wait">
           {showReflection ? (
             <motion.div
@@ -236,21 +244,6 @@ export function AudienceExperience({ session }: Props) {
                     Unique to you. Saved permanently.
                   </p>
                 </motion.div>
-
-                {/* Sync pulse — all leaves appear together */}
-                {liveState?.lookUpNudge && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2, duration: 0.7 }}
-                    className="mt-2 rounded-xl px-6 py-4 text-center"
-                    style={{ background: "rgba(200,216,240,0.06)", border: "1px solid rgba(200,216,240,0.1)" }}
-                  >
-                    <p className="font-serif text-base" style={{ color: "rgba(230,238,250,0.85)" }}>
-                      Everyone is seeing their leaf right now
-                    </p>
-                  </motion.div>
-                )}
               </motion.div>
             ) : (
               <LeafSavedCard
@@ -258,7 +251,7 @@ export function AudienceExperience({ session }: Props) {
                 language={language}
                 sessionId={session.id}
                 myLeafDNA={myLeafDNA}
-                lookUpNudge={!!liveState?.lookUpNudge}
+                lookUpNudge={!!(liveState?.lookUpNudge || showThanks)}
               />
             )
           ) : isLanguageBoot ? (
@@ -280,18 +273,21 @@ export function AudienceExperience({ session }: Props) {
               <CaptionDisplay
                 text={captionText}
                 language={language}
-                lookUpNudge={liveState?.lookUpNudge}
+                lookUpNudge={liveState?.lookUpNudge && !showLookUpPrompt}
                 lookUpLabel={t.lookUp}
+                lookUpHeadline={t.lookUpHeadline}
+                lookUpDetail={t.lookUpDetail}
                 large={largeText}
                 fairy
               />
-              <p
-                className="text-center text-xs sm:text-[11px] tracking-wide leading-relaxed px-2 sm:px-4 max-w-md mx-auto"
-                style={{ color: "rgba(200,216,240,0.38)" }}
-                dir={language === "ar" ? "rtl" : "ltr"}
-              >
-                {t.lookUpReminder}
-              </p>
+              {liveState?.lookUpNudge && !showLookUpPrompt && (
+                <p
+                  className="audience-muted text-center text-sm sm:text-base font-medium leading-relaxed px-2 sm:px-4 max-w-md mx-auto text-emerald-200/80"
+                  dir={language === "ar" ? "rtl" : "ltr"}
+                >
+                  {t.lookUpReminder}
+                </p>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

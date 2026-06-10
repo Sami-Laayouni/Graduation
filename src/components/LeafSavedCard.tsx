@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import type { LanguageCode, LeafDNA } from "@/lib/types";
@@ -18,25 +18,6 @@ interface Props {
   lookUpNudge: boolean;
 }
 
-function SectionCard({
-  title,
-  children,
-  className,
-}: {
-  title: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <section className={clsx("w-full fairy-reflection-card p-4 sm:p-5 md:p-6 space-y-3 sm:space-y-4", className)}>
-      <h2 className="text-xs font-sans font-medium tracking-[0.22em] uppercase text-white/55">
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
 export function LeafSavedCard({
   language,
   sessionId,
@@ -50,187 +31,185 @@ export function LeafSavedCard({
   const [publicName, setPublicName] = useState("");
   const [publicState, setPublicState] = useState<PublicState>("idle");
   const [notifState, setNotifState] = useState<NotifState>("idle");
+  const [showExtras, setShowExtras] = useState(false);
 
   const getUid = () => getStoredUserSessionId() ?? "";
 
   return (
     <motion.div
       className={clsx(
-        "w-full max-w-lg mx-auto flex flex-col gap-4 sm:gap-5 pb-2 sm:pb-4 px-0.5 sm:px-0",
+        "w-full max-w-lg mx-auto flex flex-col gap-3 sm:gap-4 pb-6",
         isRtl && "rtl-flip",
       )}
       dir={isRtl ? "rtl" : "ltr"}
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* Hero — large leaf preview so the person can identify it on the big screen */}
-      <div className="flex flex-col items-center text-center gap-3 pt-2">
+      {/* Hero */}
+      <div className="flex flex-col items-center text-center gap-2 pt-1">
         {myLeafDNA ? (
-          <div className="relative">
-            <LeafPreview dna={myLeafDNA} size={108} />
-          </div>
+          <LeafPreview dna={myLeafDNA} size={100} />
         ) : (
-          /* Placeholder while DNA loads (fades out when real leaf arrives) */
           <div
             className="rounded-full animate-pulse"
-            style={{ width: 80, height: 80, background: "rgba(200,216,240,0.08)" }}
+            style={{ width: 72, height: 72, background: "rgba(200,216,240,0.08)" }}
           />
         )}
-
-        <div className="space-y-1.5">
-          <span className="inline-block rounded-full px-3 py-1 text-xs font-medium tracking-widest uppercase bg-white/10 border border-white/20 text-white/80">
-            {s.savedBadge}
-          </span>
-          <h1 className="font-serif text-xl sm:text-2xl md:text-3xl text-white font-medium leading-tight">
-            {s.thankYouTitle}
-          </h1>
-          <p className="text-sm text-white/60 mt-1 leading-relaxed max-w-xs mx-auto">
-            {s.thankYouSub}
-          </p>
-        </div>
+        <h1 className="audience-body-lg font-serif text-white font-medium leading-tight">
+          {s.thankYouTitle}
+        </h1>
+        <p className="audience-muted text-sm text-white/55 max-w-xs">
+          {s.thankYouSub}
+        </p>
       </div>
 
-      {/* Look up callout — single place to say "look up" */}
+      {/* Status callout — extra emphasis when speaker triggers look-up */}
       <div
         className={clsx(
-          "w-full rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 text-center border",
+          "w-full rounded-2xl px-4 py-3.5 text-center border",
           lookUpNudge
-            ? "bg-emerald-500/15 border-emerald-400/35"
-            : "bg-white/[0.06] border-white/18",
+            ? "border-emerald-400/60 bg-emerald-500/20 ring-2 ring-emerald-400/30"
+            : "fairy-reflection-card border-white/15",
         )}
       >
+        {lookUpNudge && (
+          <motion.span
+            className="block text-2xl text-emerald-300 mb-1"
+            animate={{ y: [0, -4, 0] }}
+            transition={{ duration: 1.2, repeat: Infinity }}
+            aria-hidden
+          >
+            ↑
+          </motion.span>
+        )}
         <p className={clsx(
-          "font-serif text-base sm:text-lg md:text-xl font-medium",
-          lookUpNudge ? "text-emerald-100" : "text-white",
+          "audience-body-lg font-serif font-semibold",
+          lookUpNudge ? "text-emerald-50 text-lg sm:text-xl" : "text-white",
         )}>
           {lookUpNudge ? s.lookUpTitle : s.waitTitle}
         </p>
-        <p className="mt-1.5 text-sm leading-relaxed text-white/65 max-w-sm mx-auto">
+        <p className={clsx(
+          "audience-muted mt-1 text-sm leading-relaxed",
+          lookUpNudge ? "text-emerald-100/90" : "text-white/60",
+        )}>
           {lookUpNudge ? s.lookUpSub : s.waitSub}
-        </p>
-        <p className="mt-2 text-xs text-white/35 leading-relaxed">
-          {s.privateNote}
         </p>
       </div>
 
-      {/* 15-year journey */}
-      <SectionCard title={s.journeyTitle}>
-        <ul className="space-y-2.5 text-sm md:text-base leading-relaxed text-white/85">
-          {[s.journeyBullet1, s.journeyBullet2, s.journeyBullet3].map((line) => (
-            <li key={line} className="flex gap-3 items-start">
-              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-white/40" aria-hidden />
-              <span>{line}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="pt-1 text-xs md:text-sm italic text-white/50 border-t border-white/10">
-          {s.journeyTagline}
-        </p>
-      </SectionCard>
+      {/* Optional extras — collapsed by default to reduce scroll fatigue */}
+      <button
+        type="button"
+        onClick={() => setShowExtras((v) => !v)}
+        className="audience-touch audience-muted text-sm text-white/45 hover:text-white/70 transition-colors py-1"
+      >
+        {showExtras ? "▲ Less" : "▼ More options"}
+      </button>
 
-      {/* Public opt-in */}
-      <SectionCard title={s.shareTitle}>
-        <label className="flex items-start gap-3 cursor-pointer select-none">
-          <button
-            type="button"
-            role="checkbox"
-            aria-checked={isPublic}
-            onClick={() => setIsPublic((v) => !v)}
-            className={clsx(
-              "mt-0.5 flex-shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors",
-              isPublic
-                ? "bg-white border-white text-black"
-                : "border-white/35 bg-transparent",
-            )}
+      <AnimatePresence>
+        {showExtras && (
+          <motion.div
+            className="flex flex-col gap-3"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
           >
-            {isPublic && <span className="text-sm font-bold">✓</span>}
-          </button>
-          <span className="text-sm text-white/85 leading-snug">{s.shareLabel}</span>
-        </label>
-        <AnimatePresence>
-          {isPublic && (
-            <motion.div
-              className="flex flex-col gap-2"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-            >
-              <input
-                type="text"
-                maxLength={28}
-                placeholder={s.shareNamePlaceholder}
-                value={publicName}
-                onChange={(e) => setPublicName(e.target.value)}
-                className="ceremony-input flex-1 text-sm"
-              />
-              <button
-                type="button"
-                disabled={publicState === "saving" || publicState === "saved"}
-                onClick={async () => {
-                  setPublicState("saving");
-                  try {
-                    const res = await fetch(`/api/session/${sessionId}/response`, {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        userSessionId: getUid(),
-                        isPublic: true,
-                        username: publicName,
-                      }),
-                    });
-                    setPublicState(res.ok ? "saved" : "error");
-                  } catch {
-                    setPublicState("error");
-                  }
-                }}
-                className={clsx(
-                  "btn-ceremony w-full sm:w-auto shrink-0 px-4 py-3 text-sm min-h-[2.75rem]",
-                  publicState === "saved" && "border-emerald-400/40 text-emerald-200",
-                )}
-              >
-                {publicState === "saving" ? "…" : publicState === "saved" ? `✓ ${s.shareSaved}` : s.shareSave}
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </SectionCard>
+            {/* Public opt-in */}
+            <section className="fairy-reflection-card p-4 space-y-3">
+              <h2 className="audience-muted text-xs font-sans tracking-[0.18em] uppercase text-white/50">
+                {s.shareTitle}
+              </h2>
+              <label className="flex items-start gap-3 cursor-pointer select-none">
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={isPublic}
+                  onClick={() => setIsPublic((v) => !v)}
+                  className={clsx(
+                    "audience-touch mt-0.5 flex-shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center",
+                    isPublic ? "bg-white border-white text-black" : "border-white/35",
+                  )}
+                >
+                  {isPublic && <span className="text-sm font-bold">✓</span>}
+                </button>
+                <span className="audience-body text-sm text-white/85">{s.shareLabel}</span>
+              </label>
+              {isPublic && (
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    maxLength={28}
+                    placeholder={s.shareNamePlaceholder}
+                    value={publicName}
+                    onChange={(e) => setPublicName(e.target.value)}
+                    className="ceremony-input text-sm"
+                  />
+                  <button
+                    type="button"
+                    disabled={publicState === "saving" || publicState === "saved"}
+                    onClick={async () => {
+                      setPublicState("saving");
+                      try {
+                        const res = await fetch(`/api/session/${sessionId}/response`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            userSessionId: getUid(),
+                            isPublic: true,
+                            username: publicName,
+                          }),
+                        });
+                        setPublicState(res.ok ? "saved" : "error");
+                      } catch {
+                        setPublicState("error");
+                      }
+                    }}
+                    className={clsx(
+                      "btn-ceremony w-full py-3 text-sm min-h-[2.75rem]",
+                      publicState === "saved" && "border-emerald-400/40 text-emerald-200",
+                    )}
+                  >
+                    {publicState === "saving" ? "…" : publicState === "saved" ? `✓ ${s.shareSaved}` : s.shareSave}
+                  </button>
+                </div>
+              )}
+            </section>
 
-      {/* Yearly reminder */}
-      <SectionCard title={s.remindTitle}>
-        <p className="text-sm text-white/65 leading-relaxed">
-          {s.remindDescription}
-        </p>
-        {notifState === "idle" && (
-          <button
-            type="button"
-            onClick={async () => {
-              if (!("Notification" in window)) {
-                setNotifState("unsupported");
-                return;
-              }
-              const perm = await Notification.requestPermission();
-              setNotifState(perm === "granted" ? "granted" : "denied");
-              if (perm === "granted") {
-                localStorage.setItem("yearly-reminder-opted-in", new Date().toISOString());
-                new Notification("You are on the tree", {
-                  body: "We will remind you once a year to revisit your main argument.",
-                  icon: "/favicon.ico",
-                });
-              }
-            }}
-            className="btn-ceremony w-full py-3 text-sm"
-          >
-            {s.remindButton}
-          </button>
+            {/* Yearly reminder */}
+            <section className="fairy-reflection-card p-4 space-y-3">
+              <h2 className="audience-muted text-xs font-sans tracking-[0.18em] uppercase text-white/50">
+                {s.remindTitle}
+              </h2>
+              <p className="audience-body text-sm text-white/65">{s.remindDescription}</p>
+              {notifState === "idle" && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!("Notification" in window)) {
+                      setNotifState("unsupported");
+                      return;
+                    }
+                    const perm = await Notification.requestPermission();
+                    setNotifState(perm === "granted" ? "granted" : "denied");
+                    if (perm === "granted") {
+                      localStorage.setItem("yearly-reminder-opted-in", new Date().toISOString());
+                    }
+                  }}
+                  className="btn-ceremony w-full py-3 text-sm min-h-[2.75rem]"
+                >
+                  {s.remindButton}
+                </button>
+              )}
+              {notifState === "granted" && (
+                <p className="audience-body text-center text-sm text-emerald-200/90">✓ {s.remindDone}</p>
+              )}
+              {(notifState === "denied" || notifState === "unsupported") && (
+                <p className="audience-muted text-center text-xs text-white/45">{s.remindFallback}</p>
+              )}
+            </section>
+          </motion.div>
         )}
-        {notifState === "granted" && (
-          <p className="text-center text-sm text-emerald-200/90">✓ {s.remindDone}</p>
-        )}
-        {(notifState === "denied" || notifState === "unsupported") && (
-          <p className="text-center text-xs text-white/45">{s.remindFallback}</p>
-        )}
-      </SectionCard>
+      </AnimatePresence>
     </motion.div>
   );
 }
