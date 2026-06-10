@@ -12,19 +12,13 @@ export function SpeakerScript({ text }: Props) {
   }
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-8 md:space-y-10 lg:space-y-12">
       {groups.map((group, groupIdx) => (
-        <div key={groupIdx} className="space-y-4">
+        <div key={groupIdx} className="space-y-5 md:space-y-6">
           {group.lines.map((line, lineIdx) => (
             <p
               key={lineIdx}
-              className="leading-[1.7] select-text m-0"
-              style={{
-                fontSize: "clamp(1.15rem, 2.2vw, 1.55rem)",
-                color: "#f0f4ff",
-                fontFamily: "Georgia, 'Times New Roman', serif",
-                letterSpacing: "0.01em",
-              }}
+              className="leading-[1.75] md:leading-[1.85] select-text m-0 speaker-script-line"
             >
               {line}
             </p>

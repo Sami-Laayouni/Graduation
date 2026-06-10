@@ -152,6 +152,44 @@ body {
 }
 .btn-ceremony-primary:disabled { opacity: 0.35; cursor: not-allowed; }
 
+/* Speaker dashboard — iPad / tablet teleprompter */
+.speaker-page {
+  padding-bottom: max(6.5rem, calc(env(safe-area-inset-bottom) + 5.5rem));
+}
+.speaker-nav-bar {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  -webkit-overflow-scrolling: touch;
+}
+.speaker-touch-btn {
+  min-height: 3.25rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.speaker-touch-btn-lg {
+  min-height: 3.75rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.speaker-script-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+.speaker-script-line {
+  font-size: clamp(1.2rem, 2.6vw, 1.65rem);
+  color: #f0f4ff;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: 0.01em;
+}
+@media (min-width: 768px) {
+  .speaker-script-line {
+    font-size: clamp(1.35rem, 2.4vw, 1.9rem);
+  }
+}
+@media (min-width: 1024px) {
+  .speaker-script-line {
+    font-size: clamp(1.45rem, 1.8vw, 2rem);
+  }
+}
+
 /* Audience submit button */
 .fairy-btn {
   border-radius: 1rem;
